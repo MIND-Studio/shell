@@ -12,7 +12,7 @@ ignore = []
 [bans]
 # Reject duplicate major versions of crates (keeps the audited surface small).
 multiple-versions = "warn"
-wildcard-dependencies = "deny"
+wildcards = "deny"
 
 # Crates explicitly forbidden (PRD §5.4 "Avoid"): deprecated / unmaintained /
 # wrong-tool crypto. sodiumoxide = RUSTSEC-2021-0137; rust-crypto =
