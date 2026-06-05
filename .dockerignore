@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.css-data
+.vault-data
+.indexer-data
+.cache
+.screenshots
+.playwright-mcp
+.test-fixtures
+crypto-core/target
+*.log
+*.png
+.env
+.env*.local
+.DS_Store

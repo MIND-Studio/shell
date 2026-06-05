@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/* Mind design system. Direct path (not the "@mind-studio/ui/styles.css" exports
+   subpath) so Tailwind v4's CSS @import resolver finds the file on disk under
+   node_modules. */
+@import "../../node_modules/@mind-studio/ui/dist/styles.css";
+
+/* Generate utilities for the class names used inside @mind-studio/ui components. */
+@source "../../node_modules/@mind-studio/ui/dist";
+
+/*
+ * mind-shell uses the shared @mind-studio/ui design system on the default Mind
+ * brand (set via data-mind-theme="mind" on <html>; see layout.tsx). Colors,
+ * radius, fonts, and dark mode all come from @mind-studio/ui tokens — there is
+ * no bespoke palette. This file only carries the few shell-chrome utilities.
+ */
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--mind-font-sans);
+  min-height: 100vh;
+}
+
+/* The shell is a full-bleed app surface, not a scrolling document. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Frosted chrome for the rail / switchers, themed by Mind tokens. */
+.glass-panel {
+  background: color-mix(in oklch, var(--card) 86%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+/* The active workspace/app indicator ring. */
+.shell-active-ring {
+  box-shadow: 0 0 0 2px var(--primary);
+}

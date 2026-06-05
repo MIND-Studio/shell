@@ -1,0 +1,47 @@
+# cargo-deny configuration for crypto-core.
+# Run: cargo deny check
+# Standing supply-chain control (PRD §5.4 / §8). Crypto deps must stay audited;
+# known-bad crypto crates are explicitly banned.
+
+[advisories]
+# Fail on any security advisory affecting the dependency tree.
+version = 2
+yanked = "deny"
+ignore = []
+
+[bans]
+# Reject duplicate major versions of crates (keeps the audited surface small).
+multiple-versions = "warn"
+wildcard-dependencies = "deny"
+
+# Crates explicitly forbidden (PRD §5.4 "Avoid"): deprecated / unmaintained /
+# wrong-tool crypto. sodiumoxide = RUSTSEC-2021-0137; rust-crypto =
+# RUSTSEC-2016-0005; ring is not used for this Argon2/XChaCha20 use case.
+deny = [
+    { name = "sodiumoxide" },
+    { name = "rust-crypto" },
+    { name = "openssl" },
+    { name = "openssl-sys" },
+]
+
+[licenses]
+version = 2
+# Permissive licenses expected across the RustCrypto / dependency tree.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "CC0-1.0",
+]
+confidence-threshold = 0.9
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

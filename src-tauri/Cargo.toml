@@ -1,0 +1,77 @@
+[package]
+name = "mind-shell"
+version = "0.1.0"
+description = "mind-shell — the Dock-style shell + zero-knowledge Vault, as a native Tauri app (desktop + mobile)."
+authors = ["huhn511"]
+edition = "2021"
+rust-version = "1.77"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# Tauri 2 mobile requires the app logic to live in a library crate exposing a
+# `run()` entrypoint (the iOS/Android harnesses call into it). `main.rs` is a
+# thin desktop launcher that just calls `mind_shell_lib::run()`. `staticlib` is
+# needed for the iOS build, `cdylib` for Android.
+[lib]
+name = "mind_shell_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+# Deep-link plugin: receives the mindshell://auth/callback redirect from the
+# system browser (native OIDC, PRD-NATIVE §3.1).
+tauri-plugin-deep-link = "2"
+# Opens the system browser / system auth session for the OIDC flow (must NOT be
+# an embedded webview — PRD-NATIVE §3.1).
+tauri-plugin-opener = "2"
+
+# The audited crypto core, consumed as a NATIVE path dependency (rlib), not
+# WASM. Same crate, same FFI surface (PRD-NATIVE §2). Plaintext/keys never cross
+# the command boundary into the webview.
+crypto-core = { path = "../crypto-core" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# --- Native Solid-OIDC: PKCE + DPoP (auth.rs) -------------------------------
+# CRYPTO POLICY (team-lead): auth-transport crypto uses vetted RustCrypto crates
+# in THIS layer only — never hand-rolled, and never inside the vault crypto-core
+# (its audit surface stays vault-only). These do PKCE + the DPoP ES256 proof
+# JWTs; they touch no vault key material.
+url = "2"
+# Async OIDC HTTP (discovery, dynamic registration, token exchange). rustls so
+# there's no system-OpenSSL dependency (mobile-friendly); json for payloads.
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+# ES256 DPoP keypair + signing + public-key-as-JWK (for the DPoP proof header).
+p256 = { version = "0.13", features = ["ecdsa", "jwk"] }
+# PKCE verifier entropy + DPoP `jti`. OsRng matches crypto-core's RNG ecosystem.
+rand = "0.8"
+# PKCE S256 challenge + DPoP JWK thumbprint. Same major as crypto-core (0.10).
+sha2 = "0.10"
+# base64url (no pad) for PKCE, JWT segments, and the JWK thumbprint.
+base64 = "0.22"
+# tokio is already pulled by tauri; we use its runtime for the async token call.
+tokio = { version = "1", features = ["rt", "macros"] }
+
+[features]
+# Default to no extra features; mobile init adds its own.
+default = []
+# Production builds load the EMBEDDED frontend (../out) via the custom asset
+# protocol instead of the dev server (`build.devUrl`). Tauri's `is_dev()` is
+# `!cfg!(feature = "custom-protocol")`, so without this a plain `cargo build`
+# (CI, the Docker test harness) yields a binary that tries to reach localhost.
+# The Tauri CLI enables this automatically for `tauri build`; declaring it here
+# matches the standard template and lets `cargo build --features custom-protocol`
+# produce a working offline binary. Kept OUT of `default` so `tauri dev` still
+# uses the dev server for hot reload.
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true
+opt-level = "s"
+panic = "abort"

@@ -1,0 +1,204 @@
+<!doctype html>
+<!--
+  Cooperating TOY app for the PRD-APPS P0/P1 spike — a "hosted app" the shell
+  embeds in a sandboxed iframe. It does NOT auth itself: it asks the shell for
+  identity and brokered pod I/O over the capability bridge. Proves R1 (install =
+  pod edit), R5 (renders under chrome), R2 (brokered-only access).
+
+  Why a STATIC public/ file and not a Next route? A hosted app is a foreign,
+  self-contained bundle — it must not share the shell's Next chunk pipeline. It
+  also has to load inside a `sandbox="allow-scripts"` iframe, whose OPAQUE origin
+  ("null", no Referer) makes Next's dev server 403 every `/_next/static/chunk`
+  via `blockCrossSiteDEV`. A `public/` file is not an `/_next` endpoint, so it's
+  never blocked — it loads in dev AND prod, opaque-origin and all.
+
+  The contract mirrors src/lib/shell/bridge-protocol.ts (PROTOCOL_VERSION = 1).
+  Keep the two in sync by hand — this file deliberately depends on nothing.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mind embed demo</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0; padding: 24px;
+        color: #e5e5e5; background: #111; min-height: 100vh;
+      }
+      h1 { font-size: 18px; font-weight: 600; margin: 0; }
+      .sub { color: #888; margin-top: 4px; }
+      dl { margin-top: 12px; font-size: 13px; line-height: 1.6; }
+      code { word-break: break-all; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+      button {
+        padding: 6px 12px; border-radius: 8px; border: 1px solid #444;
+        background: #1d1d1d; color: #e5e5e5; cursor: pointer; font-size: 13px;
+      }
+      button:disabled { opacity: 0.45; cursor: default; }
+      ul { margin-top: 16px; font-size: 13px; line-height: 1.5; padding-left: 18px; }
+      pre {
+        margin-top: 16px; padding: 12px; border-radius: 8px;
+        background: #0a0a0a; border: 1px solid #333; font-size: 12px;
+        white-space: pre-wrap; color: #9ca3af; max-height: 240px; overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="app"></main>
+
+    <script>
+      "use strict";
+      var PROTOCOL_VERSION = 1;
+      var framed = window.self !== window.top;
+      var identity = null;
+      var parentOrigin = "*"; // pinned to the shell's real origin on first message
+      var reqId = 0;
+      var logLines = [];
+      var entries = null;
+
+      var app = document.getElementById("app");
+
+      function esc(s) {
+        return String(s).replace(/[&<>]/g, function (c) {
+          return c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;";
+        });
+      }
+      function append(line) { logLines.push(line); render(); }
+      function nextId() { return "r" + ++reqId; }
+      function send(msg) { window.parent.postMessage(msg, parentOrigin); }
+
+      function isBridgeMessage(d) {
+        return d && typeof d === "object" && typeof d.t === "string" &&
+          d.t.indexOf("mind:") === 0 && d.v === PROTOCOL_VERSION;
+      }
+
+      // ── Actions the toy exposes ────────────────────────────────────────────
+      function readPodRoot() {
+        append("→ readdir '' (pod root, brokered)");
+        send({ t: "mind:readdir", v: PROTOCOL_VERSION, id: nextId(), path: "" });
+      }
+      function directVsBrokered() {
+        // The crux of R2. We hit the SAME private pod file two ways:
+        //   1. directly, from the iframe — which holds NO credential → 401;
+        //   2. via the broker — the shell adds its authed token → 200.
+        // (The pod *root* is public-read, so it's a poor target; workspace.ttl is
+        // private, so the contrast is real.)
+        if (!identity) return;
+        var target = identity.workspacePod + "workspace.ttl";
+        append("→ direct fetch " + target + " (no broker, no creds)…");
+        fetch(target, { credentials: "omit" })
+          .then(function (res) {
+            var ok = res.status === 401 || res.status === 403;
+            append("direct fetch: " + res.status + (ok ? " ✓ blocked (no credential)" : " ⚠ unexpected — is it public?"));
+          })
+          .catch(function (e) {
+            append("direct fetch threw: " + e.message + " (blocked)");
+          });
+        append("→ same file via broker (shell adds the token)…");
+        send({ t: "mind:fetch", v: PROTOCOL_VERSION, id: nextId(), url: target });
+      }
+      function outOfScopeFetch() {
+        append("→ out-of-scope fetch https://example.com/ (brokered)");
+        send({ t: "mind:fetch", v: PROTOCOL_VERSION, id: nextId(), url: "https://example.com/" });
+      }
+
+      // ── Bridge listener ────────────────────────────────────────────────────
+      function onMessage(event) {
+        if (event.source !== window.parent) return;
+        if (!isBridgeMessage(event.data)) return;
+        // Pin replies to the shell's origin once we've heard from it.
+        if (event.origin && event.origin !== "null") parentOrigin = event.origin;
+        var msg = event.data;
+        switch (msg.t) {
+          case "mind:welcome":
+            identity = msg.identity;
+            append("welcome: webId=" + msg.identity.webId);
+            send({ t: "mind:ready", v: PROTOCOL_VERSION });
+            render();
+            break;
+          case "mind:readdir:result":
+            entries = msg.entries;
+            append("readdir ok: " + msg.entries.length + " entries");
+            render();
+            break;
+          case "mind:fetch:result":
+            append(
+              "brokered fetch: " + msg.status + " (" + msg.body.length + " bytes)" +
+              (msg.status >= 200 && msg.status < 300 ? " ✓ broker added the credential" : "")
+            );
+            break;
+          case "mind:denied":
+            append("DENIED (" + msg.id + "): " + msg.reason);
+            break;
+          case "mind:fail":
+            append("fail (" + msg.id + "): " + msg.message);
+            break;
+        }
+      }
+
+      // ── Render ─────────────────────────────────────────────────────────────
+      function render() {
+        if (!framed) {
+          app.innerHTML =
+            '<h1>Mind embed demo</h1>' +
+            '<p class="sub" style="max-width:480px">This is a toy hosted app. It only ' +
+            'does anything when embedded inside the Mind shell, where it receives identity ' +
+            '+ brokered pod access over the capability bridge. Open it from the ' +
+            "shell's app switcher.</p>";
+          return;
+        }
+        var html =
+          '<h1>Embed demo (hosted app)</h1>' +
+          '<p class="sub">' +
+          (identity ? "Handshake complete — no login of my own." : "Waiting for the shell handshake…") +
+          "</p>";
+        if (identity) {
+          html +=
+            "<dl>" +
+            "<div><strong>webId:</strong> <code>" + esc(identity.webId) + "</code></div>" +
+            "<div><strong>workspacePod:</strong> <code>" + esc(identity.workspacePod) + "</code></div>" +
+            "<div><strong>project:</strong> <code>" +
+            esc(identity.project ? identity.project.name : "(whole workspace)") +
+            "</code></div></dl>";
+        }
+        var dis = identity ? "" : " disabled";
+        html +=
+          '<div class="row">' +
+          '<button id="b-read"' + dis + ">Read pod root (brokered)</button>" +
+          '<button id="b-direct"' + dis + ">Direct vs brokered (private file)</button>" +
+          '<button id="b-oos"' + dis + ">Out-of-scope fetch (must deny)</button>" +
+          "</div>";
+        if (entries) {
+          html += "<ul>";
+          for (var i = 0; i < entries.length; i++) {
+            html += "<li>" + (entries[i].kind === "container" ? "📁" : "📄") + " " + esc(entries[i].name) + "</li>";
+          }
+          html += "</ul>";
+        }
+        html += "<pre>" + esc(logLines.join("\n") || "(no events yet)") + "</pre>";
+        app.innerHTML = html;
+
+        if (identity) {
+          document.getElementById("b-read").onclick = readPodRoot;
+          document.getElementById("b-direct").onclick = directVsBrokered;
+          document.getElementById("b-oos").onclick = outOfScopeFetch;
+        }
+      }
+
+      // ── Boot ───────────────────────────────────────────────────────────────
+      render();
+      if (framed) {
+        window.addEventListener("message", onMessage);
+        // Re-post hello until we get a welcome — race-free regardless of which
+        // side mounted first.
+        send({ t: "mind:hello", v: PROTOCOL_VERSION });
+        var timer = setInterval(function () {
+          if (!identity) send({ t: "mind:hello", v: PROTOCOL_VERSION });
+          else clearInterval(timer);
+        }, 300);
+      }
+    </script>
+  </body>
+</html>

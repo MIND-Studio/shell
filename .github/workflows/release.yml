@@ -1,0 +1,146 @@
+# Build the prod image on every `v*` tag (or manual run) and push it to GHCR.
+# The infra repo (mind-studio/mindpods-infra) then pins the printed @sha256
+# digest in images.env (as MIND_SHELL_IMAGE) and rolls the stack.
+#
+#   git tag v0.1.0 && git push --tags
+#
+# A separate `crypto-audit` job runs the Rust core's tests + supply-chain
+# scans on EVERY push/PR (not just tags) — a standing control per PRD §8 and
+# AGENTS.md invariant #6 (cargo audit + cargo deny are mandatory).
+#
+# GHCR auth uses the built-in GITHUB_TOKEN (Actions → Workflow permissions →
+# read+write packages). The same token installs the public @mind-studio/*
+# packages from GitHub Packages during `npm ci` (the node_auth_token secret).
+
+name: release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "git ref to build (tag or branch)"
+        required: true
+        default: "main"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: mind-shell
+
+jobs:
+  # ====================================================================
+  # Standing supply-chain control for the Rust crypto core (PRD §8).
+  # Runs on every push/PR — the core must never regress the audited deps.
+  # ====================================================================
+  crypto-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: crypto-core
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            crypto-core/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('crypto-core/Cargo.toml') }}
+
+      - name: cargo test (KATs + unit tests)
+        run: cargo test --all-features
+
+      - name: Install cargo-audit + cargo-deny
+        run: |
+          cargo install cargo-audit --locked || true
+          cargo install cargo-deny --locked || true
+
+      # RustSec advisory scan (RUSTSEC-2021-0137 / 2016-0005 etc., PRD §5.4).
+      - name: cargo audit
+        run: cargo audit
+
+      # Licenses / bans / advisories / sources. `deny.toml` is optional; with
+      # none present cargo-deny uses its defaults.
+      - name: cargo deny
+        run: cargo deny check advisories bans sources || cargo deny check
+
+  # ====================================================================
+  # Build & push the prod image. Only publishes on tags / manual dispatch;
+  # on PRs/branch pushes it builds (validating the Dockerfile) without push.
+  # ====================================================================
+  build:
+    runs-on: ubuntu-latest
+    needs: crypto-audit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=sha,format=long
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
+
+      - name: Build & push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_SOLID_ISSUER=https://pod.mindpods.org/
+            NEXT_PUBLIC_POD_BASE_URL=https://pod.mindpods.org/
+            NEXT_PUBLIC_SHELL_NAMESPACE=mind-shell
+            NEXT_PUBLIC_APP_DOCK_URL=https://dock.mindpods.org
+            NEXT_PUBLIC_APP_DRIVE_URL=https://drive.mindpods.org
+            NEXT_PUBLIC_APP_BUILDER_URL=https://builder.mindpods.org
+            NEXT_PUBLIC_APP_CODESPACES_URL=https://codespaces.mindpods.org
+          secrets: |
+            node_auth_token=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Emit digest-pinned image ref
+        if: github.event_name != 'pull_request'
+        run: |
+          IMAGE_LC="$(echo "${REGISTRY}/${{ github.repository_owner }}/${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
+          REF="${IMAGE_LC}@${{ steps.push.outputs.digest }}"
+          echo "Pinned image: ${REF}"
+          {
+            echo "### mind-shell image"
+            echo '```'
+            echo "MIND_SHELL_IMAGE=${REF}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

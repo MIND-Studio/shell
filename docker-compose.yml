@@ -1,0 +1,43 @@
+# Two Solid servers so the shell can be exercised in BOTH worlds (PRD-DID):
+#   - css     :3101  STOCK upstream CSS — no DID (the universal baseline)
+#   - css-did :3102  the DID-aware fork (../../../solid/CommunitySolidServer),
+#                    advertises controls.did.* so the master DID links on create.
+# The shell's create-workspace flow works against either; only the DID *link*
+# differs (didLinked:false on stock, true on the fork). Build the fork image once:
+#   docker build -t mind-css-did:local /Users/heussers/develop/mind/solid/CommunitySolidServer
+services:
+  css:
+    image: solidproject/community-server:latest
+    container_name: mind-shell-css
+    ports:
+      - "3101:3101"
+    volumes:
+      - ./.css-data:/data
+      - ./infra/css/seed.json:/seed.json:ro
+    command:
+      - --port=3101
+      - --baseUrl=http://localhost:3101/
+      - --rootFilePath=/data
+      - --config=@css:config/file.json
+      - --seedConfig=/seed.json
+      - --loggingLevel=warn
+    restart: unless-stopped
+
+  css-did:
+    # Built locally from the DID fork's Dockerfile (see header). Its default
+    # config chain enables the did:key account-login extension (controls.did.*).
+    image: mind-css-did:local
+    container_name: mind-shell-css-did
+    ports:
+      - "3102:3102"
+    volumes:
+      - ./.css-data-did:/data
+      - ./infra/css/seed.json:/seed.json:ro
+    command:
+      - --port=3102
+      - --baseUrl=http://localhost:3102/
+      - --rootFilePath=/data
+      - --config=@css:config/file.json
+      - --seedConfig=/seed.json
+      - --loggingLevel=warn
+    restart: unless-stopped

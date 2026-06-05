@@ -1,0 +1,24 @@
+node_modules/
+.next/
+out/
+.css-data/
+.vault-data/
+.indexer-data/
+.cache/
+.screenshots/
+.playwright-mcp/
+.test-fixtures/
+*.log
+*.png
+.env
+.env*.local
+.DS_Store
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# Rust / wasm build artifacts
+crypto-core/target/
+src/lib/vault/pkg/
+
+# DID-aware CSS data (second server)
+.css-data-did/
