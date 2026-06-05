@@ -40,6 +40,7 @@ import { cancelAutoClear } from "@/lib/vault/clipboard";
 import { ItemEditor, type EditorDraft } from "./ItemEditor";
 import { ItemDetail } from "./ItemDetail";
 import { PasswordGenerator } from "./PasswordGenerator";
+import { PrototypeWarning } from "@/components/PrototypeWarning";
 
 type Phase = "loading" | "setup" | "locked" | "unlocked";
 
@@ -197,6 +198,7 @@ function SetupScreen({ onCreate }: { onCreate: (pw: string) => Promise<void> }) 
   return (
     <div className="grid h-full place-items-center p-8">
       <div className="w-full max-w-sm space-y-4">
+        <PrototypeWarning />
         <div className="text-center">
           <div className="text-4xl">🔒</div>
           <h2 className="mt-3 text-xl font-semibold">Create your vault</h2>
@@ -252,6 +254,7 @@ function UnlockScreen({ onUnlock }: { onUnlock: (pw: string) => Promise<void> })
   return (
     <div className="grid h-full place-items-center p-8">
       <div className="w-full max-w-sm space-y-4">
+        <PrototypeWarning />
         <div className="text-center">
           <div className="text-4xl">🔒</div>
           <h2 className="mt-3 text-xl font-semibold">Unlock your vault</h2>

@@ -69,13 +69,44 @@ export function useShell(): ShellContextValue {
 
 const DCT_TITLE = "http://purl.org/dc/terms/title";
 
-/** The built-in, in-process apps the shell always offers (PRD §3). */
+/** Where the hosted Drive app is served (its own origin, loaded in the frame). */
+const DRIVE_URL = process.env.NEXT_PUBLIC_APP_DRIVE_URL ?? "http://localhost:3060";
+
+/**
+ * The built-in apps the shell always offers (PRD §3) — present in every
+ * workspace and account, no per-pod install/seed needed.
+ *
+ * Vault + Identity run in-process (no `url`). Drive is built-in too, but it's
+ * still HOSTED IN THE FRAME from its own origin (`embed:"iframe"`,
+ * `trust:"first-party"`) — i.e. the real external Drive app, just always listed
+ * without having to register `<#drive>` in the pod catalog. A pod that DOES seed
+ * its own `<#drive>` is fine: the catalog merge below drops any entry whose key
+ * is already a built-in, so Drive never doubles up.
+ */
 function builtinApps(): HostedApp[] {
   return [
     { key: "vault", label: "Vault", icon: "🔒", enabled: true },
     { key: "identity", label: "Identity", icon: "🪪", enabled: true },
+    {
+      key: "drive",
+      label: "Drive",
+      icon: "📁",
+      enabled: true,
+      url: DRIVE_URL,
+      embed: "iframe",
+      trust: "first-party",
+    },
   ];
 }
+
+/**
+ * The app to open on first load. Drive is the everyday surface and now a
+ * built-in (always present), so it opens by default in every workspace. Falls
+ * back to Vault only if the default key is overridden to something absent.
+ * Configurable per deploy via `NEXT_PUBLIC_SHELL_DEFAULT_APP`.
+ */
+const DEFAULT_APP_KEY = process.env.NEXT_PUBLIC_SHELL_DEFAULT_APP ?? "drive";
+const FALLBACK_APP_KEY = "vault";
 
 export function ShellProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -87,9 +118,12 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
   const [project, setProjectState] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [apps, setApps] = useState<HostedApp[]>(builtinApps());
-  const [activeAppKey, setActiveAppKey] = useState<string>("vault");
+  const [activeAppKey, setActiveAppKey] = useState<string>(FALLBACK_APP_KEY);
   const [ready, setReady] = useState(false);
   const overridePod = useRef<string | null>(null);
+  // The default app is applied exactly once, on the first catalog load — never
+  // again, so a later workspace switch or the user's own app choice is honored.
+  const defaultApplied = useRef(false);
   // The identity's home pod (where the Workspace index lives). Captured on
   // refresh so switchWorkspace can re-resolve the rail without re-deriving it.
   const homePod = useRef<string | null>(null);
@@ -199,19 +233,28 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       setProjects([]);
     }
 
-    // Apps: built-ins always; PLUS pod-owned `embed:"iframe"` apps from the
-    // catalog (PRD-APPS §4) so the shell can HOST them in the app body, not just
-    // link out. Pure-link apps stay out of `apps` — the waffle still lists them.
-    // Non-fatal: any read failure keeps just the built-ins (zero regression).
+    // Apps: built-ins always (incl. Drive); PLUS pod-owned `embed:"iframe"` apps
+    // from the catalog (PRD-APPS §4) so the shell can HOST them in the app body,
+    // not just link out. Pure-link apps stay out of `apps` — the waffle still
+    // lists them. Non-fatal: a read failure keeps just the built-ins.
     const builtins = builtinApps();
+    let merged = builtins;
     try {
       const catalog = await readCatalog(podRoot, authedFetch);
       const hostable = catalog.filter(
         (a) => a.embed === "iframe" && a.url && !builtins.some((b) => b.key === a.key)
       );
-      setApps([...builtins, ...hostable]);
+      merged = [...builtins, ...hostable];
     } catch {
-      setApps(builtins);
+      /* catalog unreadable — built-ins (incl. Drive) still stand */
+    }
+    setApps(merged);
+    // First load only: open the preferred default app (Drive). It's a built-in
+    // now, so it's always present; the guard only matters if the default key is
+    // overridden to something absent — then we stay on the Vault fallback.
+    if (!defaultApplied.current) {
+      defaultApplied.current = true;
+      if (merged.some((a) => a.key === DEFAULT_APP_KEY)) setActiveAppKey(DEFAULT_APP_KEY);
     }
   }, [authedFetch]);
 

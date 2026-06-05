@@ -1,4 +1,5 @@
 import ConnectForm from "@/components/ConnectForm";
+import { PrototypeWarning } from "@/components/PrototypeWarning";
 
 // The dev-shortcut panel describes the LOCAL CSS instance's seeded accounts.
 // Only show it when this build targets a local issuer — otherwise it leaks dev
@@ -23,7 +24,8 @@ export default function ConnectPage() {
         One surface wraps your identity: switch workspaces, projects and apps —
         starting with Vault, a password manager whose secrets only you can read.
       </p>
-      <div className="mt-8">
+      <PrototypeWarning className="mt-8" />
+      <div className="mt-6">
         <ConnectForm />
       </div>
       {IS_LOCAL_ISSUER && (

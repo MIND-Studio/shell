@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@mind-studio/ui";
 import { MindAppLauncher } from "@mind-studio/core/launcher";
+import { readApps, DEFAULT_APPS, type AppEntry } from "@mind-studio/core/apps";
 import { useShell } from "@/lib/shell/context";
+import { resourceExistsByListing } from "@/lib/solid/pod-fs";
 
 /**
  * The current-app label + the app-switcher "waffle" (wireframe "👤 Drive [⊞]").
@@ -19,10 +22,42 @@ import { useShell } from "@/lib/shell/context";
  *     it renders right here in the app body;
  *   - the external sibling apps — opened by `MindAppLauncher` (the shared waffle),
  *     which links out to their hosted subdomains.
+ *
+ * We compute the waffle list HERE and pass it to the launcher as an explicit
+ * `apps` prop, instead of letting the launcher's own `ensureSeeded` read+write
+ * the pod. Two reasons: (1) `ensureSeeded` lazily WRITES `home/apps.ttl`, which
+ * under React StrictMode's double-invoke races itself (one create wins, the
+ * other 412s and throws) and leaves the waffle stuck on loading skeletons on a
+ * fresh/unseeded pod; (2) we don't want to write to the user's pod just to show
+ * a launcher. So: gated, read-only catalog read → the user's own list when it
+ * exists, the shipped `DEFAULT_APPS` otherwise. No blind GET (the gate lists the
+ * container first), no write, no skeleton-lock.
  */
 export function AppSwitcher() {
   const { apps, activeAppKey, setActiveApp, workspacePod, fetch: podFetch } =
     useShell();
+
+  // The waffle's tiles. Seeded with the shipped suite so it renders instantly
+  // (no skeleton flash), then upgraded to the pod's own list if one exists.
+  const [waffleApps, setWaffleApps] = useState<AppEntry[]>(DEFAULT_APPS);
+
+  useEffect(() => {
+    if (!workspacePod) return;
+    let alive = true;
+    (async () => {
+      const doc = `${workspacePod.replace(/\/?$/, "/")}home/apps.ttl`;
+      // Gate on a listing so a pod without apps.ttl never blind-GETs (and 404s
+      // in the console) — fall straight back to the shipped suite.
+      if (!(await resourceExistsByListing(doc, workspacePod))) return;
+      const podApps = await readApps(workspacePod, podFetch);
+      if (alive && podApps && podApps.length) setWaffleApps(podApps);
+    })().catch(() => {
+      /* read-only and best-effort — DEFAULT_APPS already stands */
+    });
+    return () => {
+      alive = false;
+    };
+  }, [workspacePod, podFetch]);
 
   // Apps the shell can host in the app body: built-in in-process apps (no url)
   // and pod-owned iframe apps (PRD-APPS §4). Pure-link apps stay in the waffle.
@@ -63,11 +98,10 @@ export function AppSwitcher() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* The waffle: external sibling apps (links), pod-driven. */}
-      <MindAppLauncher
-        podRoot={workspacePod ?? undefined}
-        podFetch={podFetch}
-      />
+      {/* The waffle: external sibling apps (links). We pass the list explicitly
+          (computed above) so the launcher renders it directly and never runs its
+          own pod read+seed. */}
+      <MindAppLauncher apps={waffleApps} />
     </div>
   );
 }
