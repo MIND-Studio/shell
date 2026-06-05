@@ -29,7 +29,10 @@ RUN apt-get update \
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH
-ARG RUST_VERSION=1.82.0
+# 1.85+ required: transitive dep base64ct 1.8.x ships `edition = "2024"`, which
+# older toolchains can't parse (`cargo metadata` fails in `npm run wasm`).
+# Pinned to the toolchain the crate is developed/tested against locally.
+ARG RUST_VERSION=1.89.0
 ARG WASM_PACK_VERSION=0.13.1
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
       | sh -s -- -y --default-toolchain "${RUST_VERSION}" --profile minimal \
