@@ -65,10 +65,14 @@ jobs:
       - name: cargo test (KATs + unit tests)
         run: cargo test --all-features
 
+      # Install precompiled binaries — building these from source pulls the full
+      # crates.io tree and is flaky (a single download hiccup failed the gate);
+      # the old `cargo install … || true` also masked failures so `cargo audit`
+      # then ran with no binary ("no such command: audit").
       - name: Install cargo-audit + cargo-deny
-        run: |
-          cargo install cargo-audit --locked || true
-          cargo install cargo-deny --locked || true
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit,cargo-deny
 
       # RustSec advisory scan (RUSTSEC-2021-0137 / 2016-0005 etc., PRD §5.4).
       - name: cargo audit
