@@ -70,7 +70,16 @@ export function useShell(): ShellContextValue {
 const DCT_TITLE = "http://purl.org/dc/terms/title";
 
 /** Where the hosted Drive app is served (its own origin, loaded in the frame). */
-const DRIVE_URL = process.env.NEXT_PUBLIC_APP_DRIVE_URL ?? "http://localhost:3060";
+const DRIVE_ORIGIN = process.env.NEXT_PUBLIC_APP_DRIVE_URL ?? "http://localhost:3060";
+/**
+ * Embed Drive at its `/drive` route, not its marketing root `/`. Opening an app
+ * in the shell should land on the app itself: a returning user (Drive session
+ * cached) sees their files immediately; a signed-out user hits Drive's embedded
+ * auto-connect (it redirects `/drive` → `/connect` → silent SSO → back to
+ * `/drive`). Embedding the bare origin instead showed Drive's "Your files, in
+ * your pod" landing page — a dead end inside the shell.
+ */
+const DRIVE_URL = `${DRIVE_ORIGIN.replace(/\/$/, "")}/drive`;
 
 /**
  * The built-in apps the shell always offers (PRD §3) — present in every
