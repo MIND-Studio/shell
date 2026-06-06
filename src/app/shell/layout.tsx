@@ -50,12 +50,16 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
       {/* Content area: top switchers bar + the scrolling app body. */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-[color:var(--border)] glass-panel px-3">
-          <ProjectSwitcher />
-          <span className="text-muted-foreground">/</span>
-          <AppSwitcher />
+          {/* The switcher cluster shrinks/clips first so the account button below
+              never gets pushed off the right edge on a narrow (mobile) viewport. */}
+          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+            <ProjectSwitcher />
+            <span className="text-muted-foreground">/</span>
+            <AppSwitcher />
+          </div>
           {/* The footer account column is hidden <md, so surface the account
-              menu (incl. Log out / theme) here on mobile. */}
-          <div className="ml-auto md:hidden">
+              menu (incl. Log out / theme) here on mobile. Fixed-width, never clipped. */}
+          <div className="shrink-0 md:hidden">
             <AccountSwitcher variant="compact" />
           </div>
         </header>
