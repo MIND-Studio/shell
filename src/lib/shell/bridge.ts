@@ -9,6 +9,7 @@ import {
   type ChildMessage,
   type ParentMessage,
   type BridgeIdentity,
+  type BridgeTheme,
   type FetchMsg,
 } from "./bridge-protocol";
 import type { HostedApp } from "./types";
@@ -37,6 +38,8 @@ export interface BridgeOptions {
   app: HostedApp;
   /** Identifiers handed to the app on handshake — no credentials. */
   identity: BridgeIdentity;
+  /** The shell's current color mode, so the embedded app's chrome matches. */
+  theme: BridgeTheme;
   /** The shell's authed fetch (platform pod.fetch via useShell().fetch). */
   fetch: typeof fetch;
   /** Fired on `mind:ready`. */
@@ -46,6 +49,8 @@ export interface BridgeOptions {
 }
 
 export interface Bridge {
+  /** Push a new color mode to the app (re-broadcasts welcome). Idempotent. */
+  setTheme(theme: BridgeTheme): void;
   dispose(): void;
 }
 
@@ -165,6 +170,10 @@ export function createBridge(opts: BridgeOptions): Bridge {
   // host with a fresh bridge, so only webId is reconciled here.) Still no
   // credential ever crosses — identifiers only (AGENTS.md rule #1).
   let currentIdentity: BridgeIdentity = identity;
+  // The shell's color mode. Like webId, it can change under a mounted frame (the
+  // user toggles the theme without re-mounting the host), so we keep a mutable
+  // copy and re-broadcast on change so the embedded app's chrome stays in sync.
+  let currentTheme: BridgeTheme = opts.theme;
 
   function welcome() {
     post({
@@ -172,6 +181,7 @@ export function createBridge(opts: BridgeOptions): Bridge {
       v: PROTOCOL_VERSION,
       identity: currentIdentity,
       capabilities: ["pod:workspace-rw"],
+      theme: currentTheme,
     });
   }
 
@@ -293,6 +303,11 @@ export function createBridge(opts: BridgeOptions): Bridge {
 
   window.addEventListener("message", onMessage);
   return {
+    setTheme(theme: BridgeTheme) {
+      if (theme === currentTheme) return;
+      currentTheme = theme;
+      welcome();
+    },
     dispose() {
       window.removeEventListener("message", onMessage);
       unsubscribe();

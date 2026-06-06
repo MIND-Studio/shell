@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useMindTheme } from "@mind-studio/ui";
 import { useShell } from "@/lib/shell/context";
-import { createBridge } from "@/lib/shell/bridge";
+import { createBridge, type Bridge } from "@/lib/shell/bridge";
+import type { BridgeTheme } from "@/lib/shell/bridge-protocol";
 import type { HostedApp } from "@/lib/shell/types";
 
 /**
@@ -20,7 +22,15 @@ import type { HostedApp } from "@/lib/shell/types";
  */
 export function IframeHost({ app }: { app: HostedApp }) {
   const { webId, workspacePod, project, fetch: podFetch } = useShell();
+  const { resolvedMode } = useMindTheme();
+  const theme: BridgeTheme = resolvedMode === "light" ? "light" : "dark";
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const bridgeRef = useRef<Bridge | null>(null);
+  // Read the live theme inside the bridge effect without making it a dep — the
+  // bridge is created once per identity/app, then theme updates are pushed to the
+  // live bridge via setTheme (below), so toggling theme doesn't re-mount the frame.
+  const themeRef = useRef<BridgeTheme>(theme);
+  themeRef.current = theme;
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -58,6 +68,7 @@ export function IframeHost({ app }: { app: HostedApp }) {
         workspacePod,
         project: project ? { id: project.id, name: project.name } : null,
       },
+      theme: themeRef.current,
       fetch: podFetch,
       onReady: () => setPhase("ready"),
       onAppError: (message) => {
@@ -65,8 +76,18 @@ export function IframeHost({ app }: { app: HostedApp }) {
         setPhase("error");
       },
     });
-    return () => bridge.dispose();
+    bridgeRef.current = bridge;
+    return () => {
+      bridge.dispose();
+      bridgeRef.current = null;
+    };
   }, [app, app.url, app.trust, webId, workspacePod, project, podFetch]);
+
+  // Push shell theme changes to the live bridge so the embedded app's chrome
+  // tracks the shell without re-mounting the iframe.
+  useEffect(() => {
+    bridgeRef.current?.setTheme(theme);
+  }, [theme]);
 
   if (!app.url) {
     return (

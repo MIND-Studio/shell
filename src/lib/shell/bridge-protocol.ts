@@ -21,6 +21,11 @@ export const PROTOCOL_VERSION = 1 as const;
 /** Capability tokens the parent advertises in the welcome (coarse for v0). */
 export type Capability = "pod:workspace-rw";
 
+/** The shell's resolved color mode, handed to embedded apps so their chrome
+ *  matches the shell instead of falling back to their own default. A UI hint,
+ *  not an identifier or credential. */
+export type BridgeTheme = "light" | "dark";
+
 /** The identity handed to a hosted app — identifiers only, never credentials. */
 export interface BridgeIdentity {
   webId: string;
@@ -120,6 +125,8 @@ export interface WelcomeMsg {
   v: typeof PROTOCOL_VERSION;
   identity: BridgeIdentity;
   capabilities: Capability[];
+  /** The shell's current color mode. Absent ⇒ the app keeps its own default. */
+  theme?: BridgeTheme;
 }
 
 export interface FetchResultMsg {
