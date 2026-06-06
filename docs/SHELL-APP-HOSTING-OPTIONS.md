@@ -1,13 +1,13 @@
 # Design space — hosting apps *inside* the Mind shell
 
 > **Status:** Research draft v0.1 · **Owner:** @huhn511 · **Date:** 2026-06-04
-> **One-liner:** The full menu of ways `mind-shell-v0` could host other Mind apps (drive,
+> **One-liner:** The full menu of ways `shell` could host other Mind apps (drive,
 > codespaces, …) on one surface — and let a user **install a new app without rebuilding the
 > shell**. This doc maps the options so we can build a couple of spikes or decide later; the
 > recommended path is written up as a buildable PRD in [`../PRD-APPS.md`](../PRD-APPS.md).
 
 This is a **validated synthesis** of five parallel research sweeps run on 2026-06-04:
-(1) the current `mind-shell-v0` architecture, (2) how embeddable `mind-drive-v0` /
+(1) the current `shell` architecture, (2) how embeddable `mind-drive-v0` /
 `mind-codespaces-v0` are today, (3) the existing `apps.ttl` / `@mind-studio/core` launcher,
 (4) 2025/2026 micro-frontend architecture for Next 16 / Turbopack, and (5) runtime
 plugin/app-install + capability/sandbox patterns (VS Code, Backstage, Puter, Solid App

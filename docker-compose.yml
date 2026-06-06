@@ -4,7 +4,7 @@
 #                    advertises controls.did.* so the master DID links on create.
 # The shell's create-workspace flow works against either; only the DID *link*
 # differs (didLinked:false on stock, true on the fork). Build the fork image once:
-#   docker build -t mind-css-did:local /Users/heussers/develop/mind/solid/CommunitySolidServer
+#   docker build -t mind-css-did:local ~/develop/mind/solid/CommunitySolidServer
 services:
   css:
     image: solidproject/community-server:latest

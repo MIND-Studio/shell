@@ -1,4 +1,4 @@
-# mind-shell-v0 — the Mind "everything app"
+# shell — the Mind "everything app"
 
 A **Dock-style shell** that wraps your Mind identity and hosts every app on one
 surface — shipping with **Vault**, a zero-knowledge password manager whose crypto

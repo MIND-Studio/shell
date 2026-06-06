@@ -5,7 +5,7 @@ training-cutoff knowledge (App Router, Turbopack, `cookies()`, server actions).
 Before relying on what you "know", read `node_modules/next/dist/docs/` for the
 actual current API.
 
-# mind-shell-v0 — agent rules
+# shell — agent rules
 
 **Read this before editing any file here.** This is a sibling prototype — its own
 app, ports, data, docs. Do not unify it with sibling prototypes. The full design
@@ -116,7 +116,7 @@ the shell does the rest.
   (adds the `did:key` account-login extension → `controls.did.*`). Build its image
   once before `docker compose up`:
   ```bash
-  docker build -t mind-css-did:local /Users/heussers/develop/mind/solid/CommunitySolidServer
+  docker build -t mind-css-did:local ../solid/CommunitySolidServer
   ```
   Its default config chain auto-enables DID (`config/identity/handler/default.json`
   imports `enable/did.json` + `storage/did.json`); see the fork's `DID_LOGIN.md`.

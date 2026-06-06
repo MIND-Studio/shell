@@ -1,4 +1,4 @@
-# Code review + native-track readiness — `mind-shell-v0`
+# Code review + native-track readiness — `shell`
 
 > Reviewer pass, 2026-06-02 · scope: correctness, the 6 HARD security rules
 > (AGENTS.md), code quality, milestone status (PRD.md M0–M6), and native-track

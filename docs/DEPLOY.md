@@ -1,4 +1,4 @@
-# Deploying `mind-shell-v0` as `shell.mindpods.org`
+# Deploying `shell` as `shell.mindpods.org`
 
 Runbook for adding the shell + Vault to the live `mindpods.org` fleet. Follows
 PRD §2.3 (steps 1–5) and `mindpods-infra/docs/APP-DOCKERFILE.md`. The infra

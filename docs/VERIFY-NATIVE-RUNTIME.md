@@ -1,4 +1,4 @@
-# Native runtime verification — `mind-shell-v0` (Tauri track)
+# Native runtime verification — `shell` (Tauri track)
 
 > Runtime verification pass, 2026-06-02 · scope: actually *running* the native
 > Tauri build and exercising the OIDC + `pod_fetch` networking paths against a
