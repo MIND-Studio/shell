@@ -1,4 +1,4 @@
-# PRD — `mind-shell-v0`: Identity / Account / Workspace decoupling (+ DID-ready)
+# PRD — `shell`: Identity / Account / Workspace decoupling (+ DID-ready)
 
 > **Status:** Draft v0.1 · **Owner:** @huhn511 · **Date:** 2026-06-03
 > **One-liner:** Fix the **`account == workspace == pod`** conflation so one Account can hold
@@ -338,7 +338,7 @@ instance"* hold for our `@huhn511 + @sh` case if both live on the same host?
   `handleIncomingRedirect` call site.
 - **Pod is the source of truth** — the Workspace index lives in the pod, not a central DB; the
   localStorage `accounts.ts` registry stays a non-secret per-device cache only.
-- **Don't unify siblings**; this stays inside `mind-shell-v0`.
+- **Don't unify siblings**; this stays inside `shell`.
 
 ---
 

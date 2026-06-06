@@ -131,5 +131,5 @@ the shell does the rest.
 
 - Any server-side persistence of user data (the pod is the only store).
 - Widening the WASM FFI to pass keys/plaintext to JS.
-- Replacing/folding in `mind-dock-v0` — the shell is a *new exploration* (PRD §11).
+- Replacing/folding in `dock` — the shell is a *new exploration* (PRD §11).
 - Server-side crypto of any kind.

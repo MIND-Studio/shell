@@ -1,4 +1,4 @@
-# PRD — `mind-shell-v0`: DID identity layer (wallet-centric "passports")
+# PRD — `shell`: DID identity layer (wallet-centric "passports")
 
 > **Status:** Draft v0.1 · **Owner:** @huhn511 · **Date:** 2026-06-03
 > **One-liner:** Add a **portable, key-controlled master identity** (a `did:key` in the app's
@@ -382,7 +382,7 @@ seed-custody/keystore path **before** the wallet holds a real user's master seed
 - **One crypto stack** — reuse the audited `crypto-core` envelope for the keystore/registry; **no
   Stronghold** (§5.4).
 - **Pod is the source of truth**; the passport registry is encrypted, never a central DB (§5.6).
-- **Don't unify siblings**; this stays inside `mind-shell-v0`.
+- **Don't unify siblings**; this stays inside `shell`.
 
 ---
 

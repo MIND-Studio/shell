@@ -7,8 +7,8 @@
 > recommended path is written up as a buildable PRD in [`../PRD-APPS.md`](../PRD-APPS.md).
 
 This is a **validated synthesis** of five parallel research sweeps run on 2026-06-04:
-(1) the current `shell` architecture, (2) how embeddable `mind-drive-v0` /
-`mind-codespaces-v0` are today, (3) the existing `apps.ttl` / `@mind-studio/core` launcher,
+(1) the current `shell` architecture, (2) how embeddable `drive` /
+`codespaces` are today, (3) the existing `apps.ttl` / `@mind-studio/core` launcher,
 (4) 2025/2026 micro-frontend architecture for Next 16 / Turbopack, and (5) runtime
 plugin/app-install + capability/sandbox patterns (VS Code, Backstage, Puter, Solid App
 Interop). Sources and confidence flags are in §8.
@@ -52,7 +52,7 @@ the map out of that tension.
 - **Pod-driven launcher** — `MindAppLauncher` from `@mind-studio/core/launcher` reads
   `{pod}/home/apps.ttl` (RDF vocab `mind:App` with `label`/`url`/`icon`/`blurb`/`order`) and
   renders a waffle grid. **Every tile is a `target="_blank"` link** — no embedding today.
-  `mind-dock-v0` already has an "+ Add app" dialog that `writeApps()` back to the pod. **This is
+  `dock` already has an "+ Add app" dialog that `writeApps()` back to the pod. **This is
   the runtime-install seam we extend.**
 - **Shell context** — `useShell()` exposes `webId`, `account`, `workspacePod`, `project`,
   `activeAppKey`, `setActiveApp()`, and an **authenticated `fetch`**. This is the natural thing a
@@ -178,7 +178,7 @@ before running any app code) and **Web App Manifest** semantics:
 ```
 
 A pod-side registry the user controls = R1 satisfied *and* a natural place to record *what each app
-is allowed to touch* (R2). The `mind-dock-v0` "Add app" dialog is the seed UI; this just enriches
+is allowed to touch* (R2). The `dock` "Add app" dialog is the seed UI; this just enriches
 the schema. **Solid's Type Index** (`solid:TypeRegistration`) gives the complementary half — *where*
 the user's data of a type lives — which Solid deliberately leaves app-agnostic, so the shell owns
 the "which app opens which type" mapping.
@@ -252,7 +252,7 @@ refactor in §6) and should follow a green Spike 1+2.
 Verified via live web search (2025–2026) and direct code reading on 2026-06-04.
 
 - **High confidence (code-read):** shell registry/launcher/context/auth seams; drive & codespaces
-  non-embeddability (full-window OIDC, own `<html>`); `apps.ttl` schema + `mind-dock-v0` add-app UI.
+  non-embeddability (full-window OIDC, own `<html>`); `apps.ttl` schema + `dock` add-app UI.
   Files cited inline throughout and in [`../PRD-APPS.md`](../PRD-APPS.md).
 - **High confidence (search-verified):** Module Federation unsupported on Turbopack; `nextjs-mf`
   EOL/Pages-only; MF maintainers steering off Next.js. (`github.com/module-federation/core/issues/3153`,

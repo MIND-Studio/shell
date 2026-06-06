@@ -1,6 +1,6 @@
 # `src-tauri/` — mind-shell as a native Tauri app
 
-The native delivery of `mind-shell-v0` (PRD-NATIVE.md): the **same** Next.js shell
+The native delivery of `shell` (PRD-NATIVE.md): the **same** Next.js shell
 frontend wrapped by Tauri 2, with `crypto-core/` wired as a **native path
 dependency** (rlib) instead of WASM. One audited crypto crate, two bindings.
 

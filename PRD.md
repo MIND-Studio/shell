@@ -1,4 +1,4 @@
-# PRD — `mind-shell-v0`: The Mind "Everything App" Shell + Vault
+# PRD — `shell`: The Mind "Everything App" Shell + Vault
 
 > **Status:** Draft v0.1 · **Owner:** @huhn511 · **Date:** 2026-06-01
 > **One-liner:** A Dock-style shell that wraps identity and hosts every Mind app on one
@@ -16,11 +16,11 @@ secure password-manager crypto in Rust. Sources and confidence flags are in §12
 
 Today the Mind prototypes are **independent sibling apps** (drive, builder, codespaces, dock…),
 each its own Next.js surface. The architecture spec already names the missing layer that ties them
-together — **the Dock shell** — but no prototype implements it in full. `mind-dock-v0` is a
+together — **the Dock shell** — but no prototype implements it in full. `dock` is a
 *front-door launcher* (a grid of app tiles); it has **no workspace rail, no project switcher, no
 in-app waffle**.
 
-`mind-shell-v0` builds that shell, faithfully to the wireframe and to the protocol, and proves it
+`shell` builds that shell, faithfully to the wireframe and to the protocol, and proves it
 out by hosting one genuinely demanding app inside it: **Vault**, an end-to-end-encrypted password
 manager. Vault is the right flagship because it stress-tests the hardest protocol guarantees at
 once — *the pod is the source of truth*, *the host never sees plaintext*, *secrets are scoped by
@@ -34,7 +34,7 @@ WAC* — and it is the most legible "why privacy-first matters" demo we can ship
 | **Vault** | The flagship hosted app: a zero-knowledge password manager with a Rust crypto core | A *sandboxed app* per `architecture/src/protocol/01-pod-layout.md` |
 
 **Out of scope for v0:** cross-pod secret sharing standardization, browser-extension autofill,
-mobile, Vault team/org sharing beyond a single WAC-grant demo, and replacing `mind-dock-v0`
+mobile, Vault team/org sharing beyond a single WAC-grant demo, and replacing `dock`
 (the shell is a *new exploration*, not a migration — see §11).
 
 ---
@@ -95,7 +95,7 @@ The shell is not a UI invention; the protocol already specifies it. Quoting the 
 
 ### 2.2 The prototype conventions we must match
 
-From the survey of `mind-drive-v0`, `mind-dock-v0`, `mind-builder-v0`, `mind-shared-ui`:
+From the survey of `drive`, `dock`, `builder`, `mind-shared-ui`:
 
 - **Stack (pinned):** Next.js **16.2.6**, React **19.2.4**, `@inrupt/solid-client` **^3.0.0** +
   `solid-client-authn-{browser,node}`, Tailwind **v4** (no config file), `better-sqlite3` for
@@ -108,9 +108,9 @@ From the survey of `mind-drive-v0`, `mind-dock-v0`, `mind-builder-v0`, `mind-sha
   One issuer ⇒ silent re-auth across siblings.
 - **The OIDC single-flight rule (non-negotiable):** `handleIncomingRedirect` must be memoized to a
   module-level promise and called **exactly once** — otherwise the one-time auth code is redeemed
-  twice and the user lands signed-out. Reference impl: `mind-drive-v0/src/lib/solid/auth.ts:78`.
+  twice and the user lands signed-out. Reference impl: `drive/src/lib/solid/auth.ts:78`.
   *(`mind-dock`/`mind-builder` are flagged at-risk; the shell must single-flight from day one.)*
-- **Pod I/O:** POSIX-shaped wrappers over LDP (`mind-drive-v0/src/lib/solid/pod-fs.ts`). Known
+- **Pod I/O:** POSIX-shaped wrappers over LDP (`drive/src/lib/solid/pod-fs.ts`). Known
   Solid limits to design around: **no atomic move/rename** (copy+delete, ACLs don't follow), **no
   atomic recursive delete**, **slug is advisory** (read `Location`), **default Content-Type is
   `application/octet-stream`** (always pass it), **no server-side search/versioning/trash**.
@@ -126,7 +126,7 @@ From the survey of `mind-drive-v0`, `mind-dock-v0`, `mind-builder-v0`, `mind-sha
 `dock.`, `drive.`, `builder.`, `codespaces.` (git-bridge), **`pod.mindpods.org` = CSS v7 = the
 OIDC issuer**. Greenfield pod (`seed.json` empty); self-signup via the bridge.
 
-**To add `mind-shell-v0` as `shell.mindpods.org`** (pattern from `docs/APP-DOCKERFILE.md`):
+**To add `shell` as `shell.mindpods.org`** (pattern from `docs/APP-DOCKERFILE.md`):
 1. App repo: `output: "standalone"` in `next.config.ts`; prod `Dockerfile` (`node:22-alpine`,
    BuildKit `npm_token` secret for `@mind-studio/*`, NEXT_PUBLIC as **build-args**); `.npmrc`;
    `.github/workflows/release.yml` (`IMAGE_NAME: mind-shell`).
@@ -348,7 +348,7 @@ Vocabulary: `mind: <https://mind.dev/ns/v1#>`, reusing `schema:`/`vcard:`/`as:`/
 
 **Directory shape (to scaffold next, matching siblings):**
 ```
-mind-shell-v0/
+shell/
   PRD.md                      ← this file
   AGENTS.md  CLAUDE.md (@AGENTS.md)  README.md
   package.json  next.config.ts  tsconfig.json  postcss.config.mjs  .npmrc  Dockerfile
@@ -422,7 +422,7 @@ mind-shell-v0/
 
 ## 11. Open questions / decisions to make
 
-1. **Shell vs `mind-dock-v0`.** The shell supersedes dock's *launcher* concept. v0 treats it as a
+1. **Shell vs `dock`.** The shell supersedes dock's *launcher* concept. v0 treats it as a
    **new exploration**, not a migration; decide later whether to fold dock into the shell or keep
    dock as the lightweight front door. *(Don't unify siblings without intent.)*
 2. **App embedding.** v0 = first-party in-process apps (Vault). External-app hosting via
@@ -447,7 +447,7 @@ mind-shell-v0/
 This PRD synthesizes four sweeps (2026-06-01). Confidence: **[H]** primary source corroborated,
 **[M]** single good/vendor source, **[!]** contested — verify before building.
 
-- **Prototype conventions [H]** — read across `mind-drive-v0`, `mind-dock-v0`, `mind-builder-v0`,
+- **Prototype conventions [H]** — read across `drive`, `dock`, `builder`,
   `mind-shared-ui` (file:line refs inline in §2.2). Source of truth = each prototype's `AGENTS.md` +
   `package.json`; re-check before scaffolding.
 - **Mind protocol [H]** — `architecture/src/{architecture.md, apps.md, projects.md}`,

@@ -1,7 +1,7 @@
 /**
  * Loud "this is a prototype — don't store real secrets" banner.
  *
- * mind-shell-v0 / Vault is an unaudited prototype (AGENTS.md §6: independent
+ * shell / Vault is an unaudited prototype (AGENTS.md §6: independent
  * crypto review is required *before* the core touches real secrets, and that
  * review has not happened). Shown on the front door and inside Vault so a user
  * can't reach a password field without seeing it.

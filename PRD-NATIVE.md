@@ -1,7 +1,7 @@
-# PRD — `mind-shell-v0` Native Track: The Everything App in Your Pocket
+# PRD — `shell` Native Track: The Everything App in Your Pocket
 
 > **Status:** Draft v0.1 · **Owner:** @huhn511 · **Date:** 2026-06-01
-> **One-liner:** Ship the *same* `mind-shell-v0` shell + Vault as a **Tauri** app for
+> **One-liner:** Ship the *same* `shell` shell + Vault as a **Tauri** app for
 > **mobile (iOS/Android) and desktop**, **mobile-first** — one codebase, one Rust core,
 > the hardened crypto path for free, and a vault that actually lives in your pocket.
 
@@ -21,7 +21,7 @@ compiled to WASM. Forking would mean duplicating or cross-importing the shell, V
 core between siblings — fighting the workspace's "independent siblings explore *different things*"
 convention for no gain.
 
-**Decision (2026-06-01):** Tauri is a **first-class delivery target inside `mind-shell-v0`**, not a
+**Decision (2026-06-01):** Tauri is a **first-class delivery target inside `shell`**, not a
 sibling. `PRD.md` already commits to this in spirit — *"ship the same Rust core to both"* (`PRD.md`
 §5.5) — and lists it as M6. This doc **promotes** that from "stretch sidecar" to a real,
 mobile-first track, and owns the native problems M6 hand-waved.
@@ -145,7 +145,7 @@ a Tauri command that returns plaintext/keys (mirrors the FFI rule).
 
 ## 4. Frontend strategy (decided: reuse the web shell)
 
-Per scope decision, the native app **reuses the `mind-shell-v0` Next.js frontend**, made responsive
+Per scope decision, the native app **reuses the `shell` Next.js frontend**, made responsive
 and touch-first — one frontend codebase. Implications:
 
 - The shell chrome (workspace rail, project switcher, waffle, account switcher, app menu, app body —
@@ -166,7 +166,7 @@ and touch-first — one frontend codebase. Implications:
 Additive to `PRD.md` §7 — nothing existing moves:
 
 ```
-mind-shell-v0/
+shell/
   src-tauri/                  ← NEW: Tauri shell (Rust)
     Cargo.toml                  depends on ../crypto-core (path) for native crypto
     tauri.conf.json             windows/mobile config, deep-link scheme, capability allowlist

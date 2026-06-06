@@ -1,4 +1,4 @@
-# PRD — `mind-shell-v0`: Hosting apps *inside* the shell (the "Mind app platform")
+# PRD — `shell`: Hosting apps *inside* the shell (the "Mind app platform")
 
 > **Status:** Draft v0.1 · **Owner:** @huhn511 · **Date:** 2026-06-04
 > **One-liner:** Make the shell **host** Mind apps (drive, codespaces, …) on one surface instead
@@ -42,7 +42,7 @@ VS Code's and Backstage's plugin models (full-trust code) would not be.
 - Replacing the in-process model for Vault — Vault stays in-process (`APP_REGISTRY`); it's the
   blessed first-party crypto app and benefits from full integration.
 - A public, internet-wide app marketplace / discovery service (we ship a *pod-owned* catalog + the
-  existing `mind-dock-v0` "Add app" UI; a hosted directory is later).
+  existing `dock` "Add app" UI; a hosted directory is later).
 - Deep cross-app routing/deep-linking beyond a minimal "open at path" (Phase 3).
 - Replacing Multi-Zones/Module-Federation evaluation — **rejected**, see options doc §4 E/F.
 
@@ -53,19 +53,19 @@ VS Code's and Backstage's plugin models (full-trust code) would not be.
 | In-process app registry | `src/apps/registry.tsx` — `APP_REGISTRY: Record<string, ComponentType>`, rendered by `getAppComponent()` in `src/app/shell/page.tsx` | The app-body mount point. We add an `iframe`/`embed` branch alongside the in-process lookup. |
 | Shell context | `src/lib/shell/context.tsx` — `useShell()` → `webId`, `account`, `workspacePod`, `project`, authed `fetch`, `activeAppKey`, `setActiveApp()` | Exactly the values the bridge hands an app. `fetch` is the thing we *broker* rather than expose. |
 | Pod-driven launcher | `@mind-studio/core/launcher` `MindAppLauncher` + `@mind-studio/core/apps` (`readApps`/`writeApps`/`ensureSeeded`) reading `{pod}/home/apps.ttl` | The runtime catalog. Today every entry is a `target="_blank"` link; we add `mind:embed` so the shell knows to host instead. |
-| Add-app UI | `mind-dock-v0/src/app/dock/page.tsx` `AddAppDialog` → `writeApps()` | The runtime-install UX already exists. We enrich the schema it writes. |
+| Add-app UI | `dock/src/app/dock/page.tsx` `AddAppDialog` → `writeApps()` | The runtime-install UX already exists. We enrich the schema it writes. |
 | Single-flight OIDC | `src/lib/solid/auth.ts` (`handleIncomingRedirect` memoized once) + shared issuer `pod.mindpods.org` | The shell owns the session; apps never need to auth themselves once brokered. |
 | Pod I/O | `src/lib/solid/pod-fs.ts` (`readdir`/`readFileText`/`writeFileText`/…) over the platform's authed fetch | The implementation behind `bridge.fetch()` — already scoped, already `no-store`. |
 
-> **Reality check from research:** *no app is embeddable today.* Both `mind-drive-v0` and
-> `mind-codespaces-v0` own the full `<html>`+masthead+footer and run their own full-window OIDC
+> **Reality check from research:** *no app is embeddable today.* Both `drive` and
+> `codespaces` own the full `<html>`+masthead+footer and run their own full-window OIDC
 > redirect (`window.location.href = issuer`) — which breaks in an iframe. So §6 (the per-app
 > embedded-mode refactor) is real, budgeted work, not a flag.
 
 ## 3. The model
 
 ```
-┌──────────────────────────── mind-shell-v0 (shell origin) ────────────────────────────┐
+┌──────────────────────────── shell (shell origin) ────────────────────────────┐
 │  Shell chrome: WorkspaceRail · ProjectSwitcher · AppSwitcher · AppMenu                 │
 │  ShellProvider ─ owns the OIDC session + authed fetch ─────────────────────────────┐  │
 │                                                                                     │  │

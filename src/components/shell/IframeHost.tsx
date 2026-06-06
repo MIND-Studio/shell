@@ -34,7 +34,7 @@ export function IframeHost({ app }: { app: HostedApp }) {
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // first-party apps may run their OWN OIDC inside the frame (e.g. mind-drive-v0,
+  // first-party apps may run their OWN OIDC inside the frame (e.g. drive,
   // which is not a bridge client and self-authenticates). The CSS consent page is
   // a real <form> POST and the IdP redirect navigates the frame itself, so the
   // trusted tier needs allow-forms + allow-popups on top of same-origin. The
@@ -48,7 +48,7 @@ export function IframeHost({ app }: { app: HostedApp }) {
   // i.e. its `src` changes. The bridge effect below re-runs on every identity /
   // project rebind, but those do NOT reload the iframe, so resetting the phase
   // there would strand the overlay forever: `onLoad` won't fire again and a
-  // self-authenticating app (mind-drive-v0) never sends `mind:ready` to clear it.
+  // self-authenticating app (drive) never sends `mind:ready` to clear it.
   // Since iframe apps are now kept alive across app switches (see ShellPage),
   // that stranding is exactly what happened when scoping to a project.
   useEffect(() => {
@@ -105,7 +105,7 @@ export function IframeHost({ app }: { app: HostedApp }) {
         title={app.label}
         sandbox={sandbox}
         // Bridge apps clear the spinner with `mind:ready`; self-authenticating
-        // apps (e.g. mind-drive-v0) never speak the bridge, so also clear it on
+        // apps (e.g. drive) never speak the bridge, so also clear it on
         // the iframe's own `load` — whichever fires first. `mind:error` still wins.
         onLoad={() => setPhase((p) => (p === "loading" ? "ready" : p))}
         className="h-full w-full border-0 bg-background"

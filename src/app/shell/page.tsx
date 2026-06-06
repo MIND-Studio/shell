@@ -17,7 +17,7 @@ import type { HostedApp } from "@/lib/shell/types";
  * than mounted only while active: once opened, each stays in the DOM and is just
  * hidden (`display:none`) when another app is foregrounded. Unmounting the iframe
  * on every switch tore down its in-frame state — and for a self-authenticating
- * app like mind-drive-v0 (which can't silently restore its OIDC session; that
+ * app like drive (which can't silently restore its OIDC session; that
  * loops on CSS) that meant a full re-login + re-consent every time you came back
  * to it. Hiding instead of unmounting preserves the session, nav, and scroll, so
  * switching to Vault and back to Drive is instant and keeps you signed in.

@@ -44,7 +44,7 @@ in a sandboxed iframe and talk to the shell over a `postMessage` capability
 bridge (`src/lib/shell/bridge.ts`, `IframeHost.tsx`). **The pod credential never
 crosses the iframe** — apps post `mind:fetch/read/write`, the shell executes them
 scoped to the workspace pod. `npm run seed:embed-demo` registers a toy bridge
-app; `npm run seed:drive` registers the real `mind-drive-v0` as a first-party
+app; `npm run seed:drive` registers the real `drive` as a first-party
 frame. See [`PRD-APPS.md`](./PRD-APPS.md).
 
 ## Quick start
@@ -83,5 +83,5 @@ in [`crypto-core/CONTRACT.md`](./crypto-core/CONTRACT.md).
 
 ## Ports
 
-Dev `:3100` · local CSS `:3101`. Sibling of the other `mind-*-v0` prototypes —
+Dev `:3100` · local CSS `:3101`. Sibling of the other prototypes —
 run one at a time or override with `npm run dev -- --port NNNN`.

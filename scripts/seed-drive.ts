@@ -1,5 +1,5 @@
 /**
- * Register the REAL `mind-drive-v0` app in alice's pod catalog so the shell hosts
+ * Register the REAL `drive` app in alice's pod catalog so the shell hosts
  * it in the app body (PRD-APPS P2 — but the ZERO-DRIVE-EDIT variant).
  *
  * Unlike the toy `embed-demo`, Drive is NOT a bridge client: it has no
@@ -14,7 +14,7 @@
  *
  * Usage:
  *   docker compose up -d                       # CSS on :3101 (alice)
- *   (cd ../mind-drive-v0 && NEXT_PUBLIC_SOLID_ISSUER=http://localhost:3101/ \
+ *   (cd ../drive && NEXT_PUBLIC_SOLID_ISSUER=http://localhost:3101/ \
  *      NEXT_PUBLIC_POD_BASE_URL=http://localhost:3101/ npm run dev)   # Drive :3060
  *   npm run dev                                # shell :3100
  *   npm run seed:drive
