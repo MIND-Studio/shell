@@ -39,6 +39,7 @@ import { useAutoLock } from "@/lib/vault/autolock";
 import { cancelAutoClear } from "@/lib/vault/clipboard";
 import { ItemEditor, type EditorDraft } from "./ItemEditor";
 import { ItemDetail } from "./ItemDetail";
+import { ProviderAccounts } from "./ProviderAccounts";
 import { PasswordGenerator } from "./PasswordGenerator";
 import { PrototypeWarning } from "@/components/PrototypeWarning";
 
@@ -391,6 +392,10 @@ function UnlockedVault({
           </Button>
         </div>
       </div>
+
+      {/* Provider accounts: the already-sealed logins for your other pods,
+          read live from the wallet. Renders nothing when there are none. */}
+      <ProviderAccounts />
 
       <div className="flex min-h-0 flex-1">
         {/* list — full-width on mobile; on phones it yields to the detail pane

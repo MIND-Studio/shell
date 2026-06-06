@@ -28,6 +28,7 @@
 
 import { getPlatform, type AsyncCryptoCore } from "@/lib/platform";
 import type { KdfParams } from "@/lib/vault/crypto-contract";
+import { buildManualPassport, type ManualAccountDraft } from "./manual-account";
 import {
   REGISTRY_ITEM_ID,
   WALLET_STORAGE_KEY,
@@ -245,6 +246,43 @@ export async function updatePassport(
   await saveRegistry();
   emit();
   return getView();
+}
+
+/**
+ * Mark a provider account's email as verified (PRD-PROVIDER-ACCOUNTS §6). Flips
+ * `creds.emailVerified` to `true` so the account leaves the pending state and
+ * becomes eligible for silent resume again. A whole-`creds` merge (not a shallow
+ * patch) so the existing email/password aren't dropped. No-op if the passport is
+ * gone or carries no creds.
+ */
+export async function markEmailVerified(id: string): Promise<WalletView> {
+  if (!unlocked) throw new Error("Wallet is locked.");
+  unlocked.passports = unlocked.passports.map((p) =>
+    p.id === id && p.creds ? { ...p, creds: { ...p.creds, emailVerified: true } } : p
+  );
+  await saveRegistry();
+  emit();
+  return getView();
+}
+
+/**
+ * Capture an existing provider login manually (PRD-PROVIDER-ACCOUNTS P3) and seal
+ * it into the registry as a `password`-kind passport — viewable in the Vault's
+ * Provider accounts panel, never silently resumed (no key card). Requires an
+ * unlocked wallet (the master `did` anchors the record). The pure shaping +
+ * validation live in {@link buildManualPassport}; this only supplies the id, did,
+ * and timestamp and persists. Throws if the draft is invalid.
+ */
+export async function addManualProviderAccount(
+  draft: ManualAccountDraft
+): Promise<WalletView> {
+  if (!unlocked) throw new Error("Wallet is locked.");
+  const passport = buildManualPassport(draft, {
+    id: newPassportId(),
+    did: unlocked.did,
+    createdAt: new Date().toISOString(),
+  });
+  return addPassport(passport);
 }
 
 /** Remove a passport from the registry (does not delete its pod). */

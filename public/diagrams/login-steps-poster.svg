@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 440" width="660" height="440" role="img" aria-label="How login works, step by step: you type your master password (which never leaves your device); it opens a local safe; inside is a key card; only the key card crosses the network to the server; then you read and write your own data.">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0d12"/>
+      <stop offset="1" stop-color="#07080b"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#67e8f9"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#ffffff" fill-opacity="0.035"/>
+    </pattern>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,1 L9,5 L0,9" fill="none" stroke="#67e8f9" stroke-width="1.4"/>
+    </marker>
+    <style>
+      .t { font-family: -apple-system,system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Frame -->
+  <rect x="0.5" y="0.5" width="659" height="439" rx="16" fill="url(#bg)" stroke="#1e2430"/>
+  <rect x="0.5" y="0.5" width="659" height="439" rx="16" fill="url(#dots)"/>
+
+  <!-- Header -->
+  <text x="330" y="38" text-anchor="middle" class="t" font-size="12.5" letter-spacing="2" fill="#67e8f9">HOW LOGIN WORKS</text>
+
+  <!-- Zone labels -->
+  <text x="32" y="153" class="t" font-size="11" letter-spacing="1.5" fill="#5f6b82">ON YOUR DEVICE</text>
+  <text x="498" y="153" class="t" font-size="11" letter-spacing="1.5" fill="#5f6b82">THE SERVER</text>
+
+  <!-- Rails -->
+  <line x1="152" y1="222" x2="172" y2="222" stroke="#46566b" stroke-width="2" stroke-dasharray="9 7"/>
+  <line x1="292" y1="222" x2="312" y2="222" stroke="#46566b" stroke-width="2" stroke-dasharray="9 7"/>
+  <line x1="432" y1="222" x2="498" y2="222" stroke="#22d3ee" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="9 7"/>
+
+  <!-- Network divider -->
+  <line x1="452" y1="168" x2="452" y2="290" stroke="#2b3342" stroke-width="1.4" stroke-dasharray="4 5"/>
+
+  <!-- ===== Station 1: master password (cyan hero, current focus) ===== -->
+  <rect x="27" y="157" width="130" height="130" rx="18" fill="none" stroke="#67e8f9" stroke-opacity="0.28" filter="url(#glow)"/>
+  <rect x="32" y="162" width="120" height="120" rx="14" fill="#0c1820" stroke="url(#cyan)" stroke-opacity="0.85"/>
+  <g fill="url(#cyan)"><circle cx="71" cy="204" r="4"/><circle cx="85" cy="204" r="4"/><circle cx="99" cy="204" r="4"/><circle cx="113" cy="204" r="4"/></g>
+  <text x="92" y="256" text-anchor="middle" class="t" font-size="12" fill="#eafcff">master password</text>
+  <text x="92" y="306" text-anchor="middle" class="t" font-size="9.5" letter-spacing="0.5" fill="#67e8f9">never leaves your device</text>
+
+  <!-- ===== Station 2: the safe ===== -->
+  <rect x="172" y="162" width="120" height="120" rx="14" fill="#0d121a" stroke="#46566b" stroke-opacity="0.7"/>
+  <ellipse cx="232" cy="201" rx="11" ry="12" fill="none" stroke="#aeb6c6" stroke-width="2"/>
+  <rect x="217" y="201" width="30" height="22" rx="4" fill="#0d121a" stroke="#aeb6c6" stroke-width="2"/>
+  <circle cx="232" cy="210" r="3" fill="#aeb6c6"/>
+  <text x="232" y="256" text-anchor="middle" class="t" font-size="12" fill="#cdeef6">the safe</text>
+
+  <!-- ===== Station 3: key card (reticle = current step crossing) ===== -->
+  <rect x="312" y="162" width="120" height="120" rx="14" fill="#0d121a" stroke="#46566b" stroke-opacity="0.7"/>
+  <rect x="349" y="189" width="46" height="30" rx="5" fill="#0e2630" stroke="#67e8f9" stroke-width="1.8"/>
+  <rect x="357.5" y="194" width="11" height="9" rx="1.5" fill="none" stroke="#67e8f9" stroke-width="1.4"/>
+  <line x1="351" y1="212" x2="393" y2="212" stroke="#67e8f9" stroke-opacity="0.55" stroke-width="1.6"/>
+  <text x="372" y="256" text-anchor="middle" class="t" font-size="12" fill="#cdeef6">key card</text>
+  <!-- reticle brackets -->
+  <g stroke="#67e8f9" stroke-width="2" fill="none" opacity="0.9">
+    <path d="M321,177 L306,177 L306,192"/>
+    <path d="M423,177 L438,177 L438,192"/>
+    <path d="M321,267 L306,267 L306,252"/>
+    <path d="M423,267 L438,267 L438,252"/>
+  </g>
+
+  <!-- crossing pulse -->
+  <circle cx="468" cy="222" r="7" fill="#67e8f9" filter="url(#glow)"/>
+  <circle cx="468" cy="222" r="13" fill="none" stroke="#67e8f9" stroke-opacity="0.55"/>
+
+  <!-- ===== Station 4: your data ===== -->
+  <rect x="498" y="162" width="120" height="120" rx="14" fill="#0d121a" stroke="#46566b" stroke-opacity="0.7"/>
+  <rect x="543" y="185" width="30" height="38" rx="3" fill="none" stroke="#aeb6c6" stroke-width="2"/>
+  <line x1="549" y1="196" x2="567" y2="196" stroke="#7b8498" stroke-width="1.6"/>
+  <line x1="549" y1="204" x2="567" y2="204" stroke="#7b8498" stroke-width="1.6"/>
+  <line x1="549" y1="212" x2="561" y2="212" stroke="#7b8498" stroke-width="1.6"/>
+  <text x="558" y="256" text-anchor="middle" class="t" font-size="12" fill="#cdeef6">your data</text>
+
+  <!-- Caption (the crossing beat) -->
+  <text x="330" y="416" text-anchor="middle" class="t" font-size="14" letter-spacing="2" fill="#67e8f9">ONLY THE KEY CARD CROSSES THE NETWORK</text>
+</svg>

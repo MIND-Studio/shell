@@ -26,6 +26,9 @@ import { useShell } from "@/lib/shell/context";
 import type { Workspace } from "@/lib/shell/types";
 import { DEFAULT_ISSUER, storedIssuer } from "@/lib/solid/session";
 import { serverSupportsDid } from "@/lib/solid/did-account";
+import { serverRequiresEmailVerification } from "@/lib/solid/email-verification";
+import { isValidEmail, suggestPlusAlias } from "@/lib/identity/email";
+import { willSealWorkspaceLogin } from "@/lib/identity/provider-entry";
 import { getView as getWalletView } from "@/lib/identity/wallet";
 
 /**
@@ -207,6 +210,11 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [didAware, setDidAware] = useState<boolean | null>(null);
+  // Bring-your-own-email branch (PRD-PROVIDER-ACCOUNTS §6). Off by default (the
+  // shell mints a throwaway placeholder); auto-enabled when the server verifies.
+  const [useOwnEmail, setUseOwnEmail] = useState(false);
+  const [email, setEmail] = useState("");
+  const [verifies, setVerifies] = useState<boolean | null>(null);
 
   // Default the server to the current issuer once mounted (localStorage is
   // client-only). The field stays editable so a workspace can target another CSS.
@@ -214,21 +222,33 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
     setServer((s) => s || storedIssuer() || DEFAULT_ISSUER);
   }, []);
 
-  // Probe DID support for the chosen server so we can show what will happen.
-  const hasWallet = getWalletView().status !== "none";
+  // Probe DID support AND email-verification policy for the chosen server so we
+  // can show what will happen and pre-arm the bring-your-own-email branch.
+  const walletStatus = getWalletView().status;
+  const hasWallet = walletStatus !== "none";
+  // P1: the login is sealed only into an UNLOCKED wallet — say so honestly rather
+  // than promise a Vault entry we won't write.
+  const willStoreLogin = willSealWorkspaceLogin(walletStatus);
   useEffect(() => {
     if (!server) return;
     let cancelled = false;
     setDidAware(null);
+    setVerifies(null);
     void serverSupportsDid(server).then((ok) => {
       if (!cancelled) setDidAware(ok);
+    });
+    void serverRequiresEmailVerification(server).then((req) => {
+      if (cancelled) return;
+      setVerifies(req);
+      if (req) setUseOwnEmail(true); // provider verifies → need a real inbox
     });
     return () => {
       cancelled = true;
     };
   }, [server]);
 
-  const ready = Boolean(name.trim());
+  const emailOk = !useOwnEmail || isValidEmail(email.trim());
+  const ready = Boolean(name.trim()) && emailOk;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -236,7 +256,11 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      await createWorkspace({ name, server: server.trim() || undefined });
+      await createWorkspace({
+        name,
+        server: server.trim() || undefined,
+        email: useOwnEmail ? email.trim() : undefined,
+      });
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't create that workspace.");
@@ -258,16 +282,79 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
           aria-describedby={error ? "ws-create-error" : undefined}
         />
         <p className="text-xs text-muted-foreground">
-          That&rsquo;s all we need — the shell creates the pod and saves its
-          password for you.{" "}
+          {willStoreLogin ? (
+            <>
+              That&rsquo;s all we need — the shell creates the pod and saves its
+              login to your Vault (under &ldquo;Provider accounts&rdquo;), so you
+              can sign in to it directly later.
+            </>
+          ) : (
+            <>
+              That&rsquo;s all we need — the shell creates the pod.{" "}
+              <span className="text-[color:var(--destructive)]">
+                {hasWallet
+                  ? "Unlock your master identity to also save its login to your Vault."
+                  : "Set up a master identity to save its login to your Vault for direct sign-in."}
+              </span>
+            </>
+          )}{" "}
           {didAware === true && hasWallet ? (
             <span className="text-primary">This server supports DID — it&rsquo;ll be linked.</span>
           ) : didAware === true && !hasWallet ? (
             <span>Set up a master identity to link a DID here.</span>
-          ) : didAware === false ? (
+          ) : didAware === false && willStoreLogin ? (
             <span>This server has no DID — credentials are saved instead.</span>
           ) : null}
         </p>
+      </div>
+
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={useOwnEmail}
+            onChange={(e) => setUseOwnEmail(e.target.checked)}
+            className="size-3.5 accent-[color:var(--primary)]"
+          />
+          Use my own email
+          {verifies === true && (
+            <span className="text-primary">— this provider verifies email</span>
+          )}
+        </label>
+        {useOwnEmail && (
+          <div className="space-y-1.5 rounded-lg border border-[color:var(--border)] p-3">
+            <Label htmlFor="ws-email">Email</Label>
+            <Input
+              id="ws-email"
+              type="email"
+              inputMode="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={email && !emailOk ? "true" : undefined}
+            />
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                A real inbox keeps this account recoverable and passes verification.
+                Tip: a <code>+alias</code> lets one inbox cover many accounts.
+              </p>
+              {isValidEmail(email.trim()) && name.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setEmail(suggestPlusAlias(email.trim(), name))}
+                  className="shrink-0 text-xs text-primary underline-offset-2 hover:underline"
+                >
+                  +alias
+                </button>
+              )}
+            </div>
+            {email && !emailOk && (
+              <p className="text-xs text-[color:var(--destructive)]">
+                That doesn&rsquo;t look like a valid email.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <button

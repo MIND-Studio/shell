@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How login works — animated</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #05060a; padding: 40px; box-sizing: border-box; }
+  .lottie-figure { position: relative; margin: 0; width: 660px; max-width: 100%;
+    border-radius: 16px; overflow: hidden;
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(34,211,238,.06), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='1.2' cy='1.2' r='1.2' fill='white' fill-opacity='.035'/%3E%3C/svg%3E"),
+      linear-gradient(#0b0d12, #07080b);
+    border: 1px solid #1e2430; }
+  .lottie-figure .lottie-poster, .lottie-figure .lottie-mount { width: 100%; display: block; }
+</style>
+</head>
+<body>
+<figure class="lottie-figure" aria-label="How login works, step by step: you type your master password (which never leaves your device); it opens a local safe; inside is a key card; only the key card crosses the network to the server; then you read and write your own data.">
+  <img class="lottie-poster" src="login-steps-poster.svg" alt="">
+  <div class="lottie-mount" hidden></div>
+</figure>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+<script>
+(function () {
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var fig = document.querySelector('.lottie-figure');
+  var mount = fig.querySelector('.lottie-mount');
+  mount.hidden = false; mount.style.display = 'block';
+  fetch('login-steps.json').then(function (r) { return r.json(); }).then(function (data) {
+    lottie.loadAnimation({ container: mount, renderer: 'svg', loop: true, autoplay: true, animationData: data });
+    fig.querySelector('.lottie-poster').style.display = 'none';
+  });
+})();
+</script>
+</body>
+</html>

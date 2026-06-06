@@ -124,9 +124,12 @@ export interface ShellContextValue {
    * The user types ONLY a name — the shell auto-generates the CSS account login,
    * seals it in the wallet, and binds the master DID when the server supports it.
    * `server` defaults to the current issuer; pass another to target a different
-   * (e.g. DID-aware) CSS.
+   * (e.g. DID-aware) CSS. Pass `email` to use a REAL, deliverable address (instead
+   * of the non-deliverable placeholder) when the provider verifies email — it's
+   * sealed as `emailVerified:false` (pending) until the user confirms in-provider
+   * (PRD-PROVIDER-ACCOUNTS §6).
    */
-  createWorkspace(opts: { name: string; server?: string }): Promise<void>;
+  createWorkspace(opts: { name: string; server?: string; email?: string }): Promise<void>;
   setProject(project: Project | null): void;
   /** Re-read workspace/project/app context from the pod. */
   refresh(): Promise<void>;

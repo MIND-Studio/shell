@@ -47,6 +47,16 @@ export interface PassportCreds {
   /** `password` kind only: the auto-generated CSS account login. */
   email?: string;
   password?: string;
+  /**
+   * Email-verification state (PRD-PROVIDER-ACCOUNTS §6). Only meaningful for a
+   * real, deliverable `email` (a `.mind.local` placeholder needs no verifying):
+   *   - `undefined`/`true` → verified or nothing to verify (the default path)
+   *   - `false`            → PENDING confirmation. The account is usable only
+   *     after the user confirms in-provider; until then silent resume is
+   *     disabled for it (resume.ts) so we never auto-enter an unconfirmed login.
+   * Non-secret metadata — sealed alongside the creds, never logged.
+   */
+  emailVerified?: boolean;
 }
 
 /** A per-server bundle the master identity owns (PRD-DID §2.2). */
@@ -84,6 +94,15 @@ export interface Passport {
    * rail, not identities to act as.
    */
   workspace?: boolean;
+  /**
+   * True when this login was **captured manually** (PRD-PROVIDER-ACCOUNTS P3): an
+   * existing account at a provider the shell can't provision headlessly (Inrupt
+   * PodSpaces, a register-yourself CSS). The user typed the email + password; the
+   * shell seals them like any other provider account but holds NO client-
+   * credentials key card, so it is never silently resumed (resume.ts) — a
+   * viewable, reusable login only.
+   */
+  manual?: boolean;
   /** Encrypted-at-rest only; present only inside the decrypted registry. */
   creds?: PassportCreds;
 }

@@ -1,6 +1,6 @@
 # PRD — `shell`: Hosting apps *inside* the shell (the "Mind app platform")
 
-> **Status:** Draft v0.1 · **Owner:** @huhn511 · **Date:** 2026-06-04
+> **Status:** P0–P2 built (shell side) · **Owner:** @huhn511 · **Date:** 2026-06-07 (orig. 2026-06-04)
 > **One-liner:** Make the shell **host** Mind apps (drive, codespaces, …) on one surface instead
 > of linking out to them — and make **"install an app" mean "add an entry to your pod,"** not
 > "rebuild the shell." Apps run **sandboxed**, accessing the pod only through a shell-brokered,
@@ -193,11 +193,17 @@ effort (codespaces has server-side cookie sessions + an OCI registry route + mor
 
 | Phase | Deliverable | Proves | Gate |
 |---|---|---|---|
-| **P0** | `IframeHost` in app body + `mind:embed` in `apps.ttl` + handshake handing identity to a **cooperating throwaway page** | R1 (install = pod edit) + R5 (renders under chrome) end-to-end | A pod-registered toy app shows inside the shell, knows the WebID. |
-| **P1** | `bridge.fetch` brokered pod I/O + `sandbox="allow-scripts"` opaque origin, hard-coded scope | R2 (sandboxed, brokered access) | Toy app reads one pod resource *only* via the broker; direct fetch fails. |
-| **P2** | **Drive embedded mode** (§6) behind the bridge; first-party pre-grant; drive deploy sets `frame-ancestors` to the shell | Real app, real workflow, in the shell | Drive browses files inside the shell with no second login; drive refuses to frame in any *other* site. |
+| **P0 ✅** | `IframeHost` in app body + `mind:embed` in `apps.ttl` + handshake handing identity to a **cooperating throwaway page** | R1 (install = pod edit) + R5 (renders under chrome) end-to-end | A pod-registered toy app shows inside the shell, knows the WebID. |
+| **P1 ✅** | `bridge.fetch` brokered pod I/O + `sandbox="allow-scripts"` opaque origin, hard-coded scope | R2 (sandboxed, brokered access) | Toy app reads one pod resource *only* via the broker; direct fetch fails. |
+| **P2 ✅ (shell side)** | **Drive embedded mode** (§6) behind the bridge; first-party pre-grant; drive deploy sets `frame-ancestors` to the shell | Real app, real workflow, in the shell | Drive browses files inside the shell with no second login; drive refuses to frame in any *other* site. |
 | **P3** | Consent sheet + `mind:requestAccess` + Access-Grant persistence; route-sync/deep-linking | Untrusted tier + shareable deep links | A community app prompts for scope; `?app=&p=` deep-links work. |
 | **P4** | Codespaces embedded mode; manifest discovery (`/.well-known/mind-app.json`); dock "Add app" writes the richer schema | Second hard app + smoother install | Add an arbitrary app URL in dock → it hosts in the shell. |
+
+**Status (2026-06-07):** P0–P1 built and live; P2 built **shell-side** — the shell embeds Drive as a
+first-party iframe app under the bridge (`src/components/shell/IframeHost.tsx`, `src/lib/shell/bridge.ts`,
+`bridge-protocol.ts`; Drive is a built-in `embed:"iframe"` app in `src/lib/shell/context.tsx`). The
+remaining P2 item is Drive's own deploy-side `frame-ancestors` CSP (lives in the Drive repo, not here).
+P3–P4 (consent sheet, deep-link route-sync, Codespaces, manifest discovery) are not started.
 
 P0+P1 are the **Spike 1+2** from the options doc — do them as throwaway spikes first; promote to
 real code only once green.

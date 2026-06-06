@@ -369,7 +369,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
   // simply records didLinked:false. A master wallet is optional: with none, the
   // workspace still provisions (name-only), just without DID-link or sealed creds.
   const createWorkspace = useCallback(
-    async ({ name, server }: { name: string; server?: string }) => {
+    async ({ name, server, email: byoEmail }: { name: string; server?: string; email?: string }) => {
       const home = homePod.current;
       if (!home || !webId) {
         throw new Error("You need to be signed in to create a workspace.");
@@ -394,7 +394,12 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? crypto.randomUUID().slice(0, 8)
           : Math.random().toString(36).slice(2, 10);
-      const email = `${slug}-${rand}@workspace.mind.local`;
+      // A REAL email the user brought (provider verifies) vs. the default
+      // non-deliverable placeholder. The bring-your-own address is sealed pending
+      // verification (PRD-PROVIDER-ACCOUNTS §6); the placeholder needs none.
+      const provided = byoEmail?.trim();
+      const email = provided || `${slug}-${rand}@workspace.mind.local`;
+      const emailVerified = provided ? false : true;
 
       // DID-link + sealing need an unlocked master wallet; degrade gracefully.
       const wallet = getWalletView();
@@ -422,7 +427,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
           createdAt: new Date().toISOString(),
           workspace: true,
           didLinked,
-          creds: { kind: "password", email, password },
+          creds: { kind: "password", email, password, emailVerified },
         }).catch(() => {
           /* sealing is best-effort; the pod is already usable via OIDC */
         });
