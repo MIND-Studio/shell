@@ -32,6 +32,9 @@ permissions:
   packages: write
 
 env:
+  # Run JS actions (checkout, docker/*) on Node 24 - silences the Node-20
+  # deprecation warning. Becomes the default after 2026-06-16.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   REGISTRY: ghcr.io
   IMAGE_NAME: mind-shell
 
