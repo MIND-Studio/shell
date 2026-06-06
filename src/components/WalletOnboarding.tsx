@@ -60,7 +60,7 @@ export default function WalletOnboarding() {
 
   const [pw, setPw] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [label, setLabel] = useState("Personal");
+  const [label, setLabel] = useState("");
   const [server, setServer] = useState(DEFAULT_ISSUER);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [busy, setBusy] = useState<"" | "create" | "unlock">("");
@@ -183,6 +183,13 @@ export default function WalletOnboarding() {
       </p>
       <div className="mt-4 space-y-3">
         <Field
+          id="ob-label"
+          label="Name this identity"
+          value={label}
+          onChange={setLabel}
+          placeholder="Personal"
+        />
+        <Field
           id="ob-pw"
           label="Master password"
           type="password"
@@ -205,12 +212,11 @@ export default function WalletOnboarding() {
           onClick={() => setShowAdvanced((v) => !v)}
           className="text-xs text-muted-foreground underline-offset-2 hover:underline"
         >
-          {showAdvanced ? "Hide options" : "Options (server, label)"}
+          {showAdvanced ? "Hide options" : "Options (server)"}
         </button>
         {showAdvanced && (
           <div className="space-y-3 rounded-lg border border-[color:var(--border)] p-3">
             <Field id="ob-server" label="Server" value={server} onChange={setServer} />
-            <Field id="ob-label" label="Label" value={label} onChange={setLabel} />
           </div>
         )}
 
@@ -261,6 +267,7 @@ function Field({
   onChange,
   type = "text",
   autoComplete,
+  placeholder,
   onEnter,
 }: {
   id: string;
@@ -269,6 +276,7 @@ function Field({
   onChange: (v: string) => void;
   type?: string;
   autoComplete?: string;
+  placeholder?: string;
   onEnter?: () => void;
 }) {
   return (
@@ -279,6 +287,7 @@ function Field({
         type={type}
         value={value}
         autoComplete={autoComplete}
+        placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && onEnter) onEnter();

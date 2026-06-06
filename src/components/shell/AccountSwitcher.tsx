@@ -82,10 +82,19 @@ export function AccountSwitcher({ variant = "bar" }: { variant?: "bar" | "compac
     await reloadIdentity();
   };
 
-  const name = account?.displayName ?? "Your account";
+  const name = account?.displayName ? prettySlug(account.displayName) : "Your account";
   const initial = name.slice(0, 1).toUpperCase();
   const webHost = account ? hostOf(account.webId) : undefined;
   const others = accounts.filter((a) => a.webId !== account?.webId);
+  // A remembered account that is also one of our passports should show the name
+  // the user chose at creation, not its raw pod slug. Match by WebID; fall back
+  // to prettifying the slug (strip the `-<hex>` collision suffix) so the switcher
+  // never surfaces "personal-c7668c96".
+  const labelByWebId = new Map(
+    (wallet.passports ?? []).filter((p) => p.label).map((p) => [p.webId, p.label as string])
+  );
+  const friendlyName = (a: (typeof others)[number]) =>
+    labelByWebId.get(a.webId) ?? (a.displayName ? prettySlug(a.displayName) : hostOf(a.webId));
 
   const avatar = (
     <Avatar className="size-8 ring-1 ring-[color:var(--border)]">
@@ -190,7 +199,7 @@ export function AccountSwitcher({ variant = "bar" }: { variant?: "bar" | "compac
               {others.map((a) => (
                 <DropdownMenuItem key={a.webId} asChild>
                   <Link href="/connect">
-                    <span className="truncate">{a.displayName ?? hostOf(a.webId)}</span>
+                    <span className="truncate">{friendlyName(a)}</span>
                   </Link>
                 </DropdownMenuItem>
               ))}
@@ -228,4 +237,15 @@ function hostOf(webId: string): string {
   } catch {
     return webId;
   }
+}
+
+// A provisioned pod slug is `<label>-<8 hex>` (the random collision suffix from
+// account.ts). Users never chose the hex, so strip it for display and restore a
+// readable label — "personal-c7668c96" → "Personal". Names without that exact
+// suffix shape (a server account like "bob") are shown untouched.
+function prettySlug(name: string): string {
+  const m = /^(.+)-[0-9a-f]{8}$/.exec(name);
+  if (!m) return name;
+  const base = m[1];
+  return base.charAt(0).toUpperCase() + base.slice(1);
 }
