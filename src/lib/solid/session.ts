@@ -16,7 +16,7 @@ const ISSUER_KEY = "mind-shell:oidc-issuer";
 export const DEFAULT_ISSUER =
   process.env.NEXT_PUBLIC_SOLID_ISSUER ??
   process.env.NEXT_PUBLIC_POD_BASE_URL ??
-  "https://pod.mindpods.org/";
+  "https://pods.mindpods.org/";
 
 export function storedIssuer(): string {
   if (typeof window === "undefined") return DEFAULT_ISSUER;

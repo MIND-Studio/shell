@@ -33,7 +33,7 @@ the map out of that tension.
 | **R1** | **Runtime install, no shell rebuild.** Adding an app = registering a URL/manifest (ideally in the pod). | The headline ask. Distinguishes a *platform* from a *bundle of links*. |
 | **R2** | **Privacy-first pod access.** A hosted app must not get ambient access to the whole pod; access is scoped and, for untrusted apps, sandboxed. | This is the entire Mind thesis. An "app store" that hands every app your pod credential is a non-starter. |
 | **R3** | **Works on Next 16 / Turbopack.** | Hard constraint — see §4, option E. |
-| **R4** | **Shared identity / SSO.** A user signs in once; apps don't each re-run the OIDC dance. | Already half-solved: all prototypes default to `pod.mindpods.org` as issuer → silent re-auth. |
+| **R4** | **Shared identity / SSO.** A user signs in once; apps don't each re-run the OIDC dance. | Already half-solved: all prototypes default to `pods.mindpods.org` as issuer → silent re-auth. |
 | **R5** | **Unified UX.** One shell chrome (rail, switcher, app menu); apps render in the app body, not a foreign full-page layout. | The point of a "shell" vs. a bookmark folder. |
 | **R6** | **Incremental.** We can ship value with first-party apps before solving untrusted third-party sandboxing. | Don't block the demo on the hard security problem. |
 

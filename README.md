@@ -68,7 +68,7 @@ npm run seed:demo              # populate a demo vault + workspace (idempotent)
 ```
 
 By default (`.env.local`) dev points at the local CSS on `:3101`. Remove that line
-to use the shared prod pod at `pod.mindpods.org` (SSO across the sibling apps).
+to use the shared prod pod at `pods.mindpods.org` (SSO across the sibling apps).
 
 ## Crypto core
 

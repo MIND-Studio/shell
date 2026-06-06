@@ -28,7 +28,7 @@
         "style-src": "'self' 'unsafe-inline'",
         "font-src": "'self' data:",
         "script-src": "'self'",
-        "connect-src": "'self' ipc: http://ipc.localhost https://pod.mindpods.org https://api.pwnedpasswords.com http://localhost:3101",
+        "connect-src": "'self' ipc: http://ipc.localhost https://pods.mindpods.org https://api.pwnedpasswords.com http://localhost:3101",
         "frame-ancestors": "'none'",
         "object-src": "'none'",
         "base-uri": "'self'",

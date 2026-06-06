@@ -3,7 +3,7 @@
 Runbook for adding the shell + Vault to the live `mindpods.org` fleet. Follows
 PRD §2.3 (steps 1–5) and `mindpods-infra/docs/APP-DOCKERFILE.md`. The infra
 stack went live 2026-05-31 (single Hetzner VM `37.27.80.161`, SSH alias
-`mind-codespaces`, one Caddy edge, CSS at `pod.mindpods.org` = the OIDC issuer).
+`mind-codespaces`, one Caddy edge, CSS at `pods.mindpods.org` = the OIDC issuer).
 
 This repo already carries the app-side pieces (PRD §2.3 step 1):
 `output: "standalone"` in `next.config.ts`, the prod `Dockerfile` (with the
@@ -23,7 +23,7 @@ add a catalog tile, and wire the infra repo.
 > 4. `workflow_dispatch` builds **committed HEAD** — commit any build-arg edits
 >    before triggering a manual build.
 > 5. **On-page login needs a CORS-permissive pod.** The shell's on-page password
->    login (`PasswordLoginCard`) calls `pod.mindpods.org/.account/` and
+>    login (`PasswordLoginCard`) calls `pods.mindpods.org/.account/` and
 >    `…/.oidc/token` **cross-origin from `shell.mindpods.org` in the browser**, and
 >    mints **client-credentials** via the Account API. The prod CSS must therefore
 >    (a) send `Access-Control-Allow-Origin` (echoing the shell origin) +
@@ -40,8 +40,8 @@ add a catalog tile, and wire the infra repo.
 The build-args are baked into `release.yml` already (public mindpods.org URLs):
 
 ```
-NEXT_PUBLIC_SOLID_ISSUER=https://pod.mindpods.org/
-NEXT_PUBLIC_POD_BASE_URL=https://pod.mindpods.org/
+NEXT_PUBLIC_SOLID_ISSUER=https://pods.mindpods.org/
+NEXT_PUBLIC_POD_BASE_URL=https://pods.mindpods.org/
 NEXT_PUBLIC_SHELL_NAMESPACE=mind-shell
 NEXT_PUBLIC_APP_DOCK_URL=https://dock.mindpods.org
 NEXT_PUBLIC_APP_DRIVE_URL=https://drive.mindpods.org
@@ -184,15 +184,15 @@ ssh mind-codespaces 'cd /opt/mindpods-infra && \
 ## 6. Verify
 
 - `https://shell.mindpods.org` serves the shell; the login card points at
-  `pod.mindpods.org` and SSO works if already signed in at a sibling.
+  `pods.mindpods.org` and SSO works if already signed in at a sibling.
 - **Redirect login** (`MindLoginCard`) — "Continue with Mind" → land in the shell,
   switch Workspace / Project / app. This is the always-on path.
 - **On-page password login (§C)** — sign in with email + password on `/connect`
-  and confirm it lands in `/shell` **without a redirect to `pod.mindpods.org`**. If
+  and confirm it lands in `/shell` **without a redirect to `pods.mindpods.org`**. If
   the browser console shows a CORS error on `/.account/` or `…/.oidc/token`, the
   pod isn't configured per gotcha #5 — the redirect card still works, but on-page
   login is unavailable until the pod allows it. (Quick pre-check from a shell box:
-  `curl -i -X OPTIONS https://pod.mindpods.org/.account/ -H 'Origin:
+  `curl -i -X OPTIONS https://pods.mindpods.org/.account/ -H 'Origin:
   https://shell.mindpods.org' -H 'Access-Control-Request-Method: POST'` →
   expect `access-control-allow-origin` echoing the shell origin.)
 - **Background resume / one-tap unlock (A/B)** — after an on-page login, hard-reload

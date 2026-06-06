@@ -129,8 +129,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_SOLID_ISSUER=https://pod.mindpods.org/
-            NEXT_PUBLIC_POD_BASE_URL=https://pod.mindpods.org/
+            NEXT_PUBLIC_SOLID_ISSUER=https://pods.mindpods.org/
+            NEXT_PUBLIC_POD_BASE_URL=https://pods.mindpods.org/
             NEXT_PUBLIC_SHELL_NAMESPACE=mind-shell
             NEXT_PUBLIC_APP_DOCK_URL=https://dock.mindpods.org
             NEXT_PUBLIC_APP_DRIVE_URL=https://drive.mindpods.org

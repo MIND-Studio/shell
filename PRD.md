@@ -104,7 +104,7 @@ From the survey of `drive`, `dock`, `builder`, `mind-shared-ui`:
   tarball — *never* a `file:` symlink; Turbopack rejects out-of-root symlinks). Exports:
   `.` (login), `./apps` (the `apps.ttl` registry helpers), `./launcher` (`MindAppLauncher` grid).
   After editing shared UI run `mind-shared-ui/scripts/sync.sh`.
-- **Default OIDC issuer:** `https://pod.mindpods.org/` (override via `NEXT_PUBLIC_SOLID_ISSUER`).
+- **Default OIDC issuer:** `https://pods.mindpods.org/` (override via `NEXT_PUBLIC_SOLID_ISSUER`).
   One issuer ⇒ silent re-auth across siblings.
 - **The OIDC single-flight rule (non-negotiable):** `handleIncomingRedirect` must be memoized to a
   module-level promise and called **exactly once** — otherwise the one-time auth code is redeemed
@@ -123,7 +123,7 @@ From the survey of `drive`, `dock`, `builder`, `mind-shared-ui`:
 
 `mindpods-infra` went **live 2026-05-31** (clean cutover off `*.duckdns.org`). Single Hetzner VM
 (`37.27.80.161`, SSH `mind-codespaces`), one Caddy edge, 8 containers. Live hosts: apex (landing),
-`dock.`, `drive.`, `builder.`, `codespaces.` (git-bridge), **`pod.mindpods.org` = CSS v7 = the
+`dock.`, `drive.`, `builder.`, `codespaces.` (git-bridge), **`pods.mindpods.org` = CSS v7 = the
 OIDC issuer**. Greenfield pod (`seed.json` empty); self-signup via the bridge.
 
 **To add `shell` as `shell.mindpods.org`** (pattern from `docs/APP-DOCKERFILE.md`):
@@ -344,7 +344,7 @@ Vocabulary: `mind: <https://mind.dev/ns/v1#>`, reusing `schema:`/`vcard:`/`as:`/
 | Local cache | `better-sqlite3` (`.vault-data/`, in-memory plaintext index only, gitignored) |
 | Scripts | `tsx scripts/*.ts` (`seed:demo`, `smoke:*`) |
 | Dev port | **3100** · CSS port **3101** (free; beyond landing's 3090) |
-| OIDC issuer | default `https://pod.mindpods.org/`; local override `http://localhost:3101/` |
+| OIDC issuer | default `https://pods.mindpods.org/`; local override `http://localhost:3101/` |
 
 **Directory shape (to scaffold next, matching siblings):**
 ```
@@ -409,7 +409,7 @@ shell/
 
 ## 10. Success criteria
 
-- Sign in once at `pod.mindpods.org`, land in the shell, switch Workspace / Project / app and add a
+- Sign in once at `pods.mindpods.org`, land in the shell, switch Workspace / Project / app and add a
   second Account — all from the wireframe surface.
 - Create a Vault item; confirm **only ciphertext** is written to the pod (inspect `*.enc` raw — no
   plaintext); decrypt it back on a second device using the stored KDF params.

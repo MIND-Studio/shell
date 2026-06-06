@@ -351,7 +351,7 @@ mod tests {
     #[test]
     fn authorization_url_has_pkce_and_required_params() {
         let url = build_authorization_url(
-            "https://pod.mindpods.org/.oidc/auth",
+            "https://pods.mindpods.org/.oidc/auth",
             "client-123",
             REDIRECT_URI,
             "state-xyz",

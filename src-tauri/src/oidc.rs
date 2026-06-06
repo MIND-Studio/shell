@@ -407,7 +407,7 @@ mod tests {
     #[test]
     fn dpop_proof_is_three_segment_es256_jwt_with_required_claims() {
         let key = DpopKey::generate();
-        let jwt = key.proof("POST", "https://pod.mindpods.org/.oidc/token", None).unwrap();
+        let jwt = key.proof("POST", "https://pods.mindpods.org/.oidc/token", None).unwrap();
         let segs: Vec<&str> = jwt.split('.').collect();
         assert_eq!(segs.len(), 3, "compact JWS has 3 segments");
 
@@ -423,7 +423,7 @@ mod tests {
         let claims: serde_json::Value =
             serde_json::from_slice(&B64URL.decode(segs[1]).unwrap()).unwrap();
         assert_eq!(claims["htm"], "POST");
-        assert_eq!(claims["htu"], "https://pod.mindpods.org/.oidc/token");
+        assert_eq!(claims["htu"], "https://pods.mindpods.org/.oidc/token");
         assert!(claims["jti"].is_string());
         assert!(claims["iat"].is_number());
         assert!(claims.get("ath").is_none(), "no ath at token endpoint");
@@ -436,7 +436,7 @@ mod tests {
     fn dpop_proof_signature_verifies() {
         use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
         let key = DpopKey::generate();
-        let jwt = key.proof("GET", "https://pod.mindpods.org/resource", Some("abc")).unwrap();
+        let jwt = key.proof("GET", "https://pods.mindpods.org/resource", Some("abc")).unwrap();
         let segs: Vec<&str> = jwt.split('.').collect();
         let signing_input = format!("{}.{}", segs[0], segs[1]);
         let sig = Signature::from_slice(&B64URL.decode(segs[2]).unwrap()).unwrap();

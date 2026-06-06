@@ -7,7 +7,7 @@ import { PrototypeWarning } from "@/components/PrototypeWarning";
 const ISSUER =
   process.env.NEXT_PUBLIC_SOLID_ISSUER ??
   process.env.NEXT_PUBLIC_POD_BASE_URL ??
-  "https://pod.mindpods.org/";
+  "https://pods.mindpods.org/";
 const IS_LOCAL_ISSUER =
   ISSUER.includes("localhost") || ISSUER.includes("127.0.0.1");
 

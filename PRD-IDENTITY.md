@@ -163,12 +163,12 @@ the WebID today (`readPodRoot`). Rationale: the shell already owns its `/apps/sh
   mind:workspace <#ws-home>, <#ws-family> .
 
 <#ws-home> a mind:WorkspaceRef ;
-  mind:podRoot   <https://pod.mindpods.org/alice/> ;
+  mind:podRoot   <https://pods.mindpods.org/alice/> ;
   mind:role      "owner" ;
   dct:title      "Alice's Workspace" .
 
 <#ws-family> a mind:WorkspaceRef ;
-  mind:podRoot   <https://pod.mindpods.org/family/> ;
+  mind:podRoot   <https://pods.mindpods.org/family/> ;
   mind:role      "member" ;
   dct:title      "Family" .
 ```

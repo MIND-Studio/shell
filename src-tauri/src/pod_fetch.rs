@@ -298,7 +298,7 @@ mod tests {
         let dpop = DpopKey::generate();
         let token = "sample-access-token";
         let ath = oidc::ath_for(token);
-        let target = url::Url::parse("https://pod.mindpods.org/alice/vault/items/1.enc?v=2").unwrap();
+        let target = url::Url::parse("https://pods.mindpods.org/alice/vault/items/1.enc?v=2").unwrap();
         let jwt = dpop.proof("GET", &htu(&target), Some(&ath)).unwrap();
 
         let segs: Vec<&str> = jwt.split('.').collect();
@@ -309,7 +309,7 @@ mod tests {
         .unwrap();
         assert_eq!(claims["htm"], "GET");
         // htu has query stripped.
-        assert_eq!(claims["htu"], "https://pod.mindpods.org/alice/vault/items/1.enc");
+        assert_eq!(claims["htu"], "https://pods.mindpods.org/alice/vault/items/1.enc");
         assert_eq!(claims["ath"], ath);
         // ath is exactly base64url(SHA-256(token)).
         use sha2::{Digest, Sha256};

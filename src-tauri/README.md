@@ -71,14 +71,14 @@ the `export` script.
 - `https://api.pwnedpasswords.com` — the HIBP k-anonymity range API (only the
   5-char SHA-1 prefix is ever sent; the password/full hash never leave the device,
   CONTRACT.md `hibp_prefix`). **Required** or the breach check fails silently.
-- `https://pod.mindpods.org` — the default Solid issuer + pod host.
+- `https://pods.mindpods.org` — the default Solid issuer + pod host.
 - `http://localhost:3101` — the opt-in local CSS instance (per AGENTS.md).
 
 **v0 limitation (documented, not a bug):** Solid pods can live on *arbitrary*
-hosts, but this v0 `connect-src` allowlists only the default `pod.mindpods.org`
+hosts, but this v0 `connect-src` allowlists only the default `pods.mindpods.org`
 (and the local CSS). A user whose pod/issuer is on another origin will be blocked
 by CSP until their host is added here. v0 ships with the default-issuer story
-(`pod.mindpods.org`, the SSO hub per the prototypes' shared-login design); a
+(`pods.mindpods.org`, the SSO hub per the prototypes' shared-login design); a
 later milestone should derive `connect-src` from the configured issuer/pod origin
 (or relax to a vetted pattern) rather than hardcoding hosts.
 
@@ -198,7 +198,7 @@ needs the Tauri CLI (not installed here) and a reachable issuer:
 
 ```bash
 cargo install tauri-cli --version "^2"     # one-time
-export NEXT_PUBLIC_SOLID_ISSUER=https://pod.mindpods.org/   # or a local CSS
+export NEXT_PUBLIC_SOLID_ISSUER=https://pods.mindpods.org/   # or a local CSS
 cd src-tauri && cargo tauri dev            # builds the frontend + opens the window
 # In the app: click "Continue with Mind" -> the SYSTEM browser opens at the
 # issuer's /.oidc/auth -> sign in -> the IdP redirects to

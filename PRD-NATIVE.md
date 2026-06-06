@@ -92,7 +92,7 @@ auth.ts`) assumes **browser** redirect semantics. Native is different:
 - `@inrupt/solid-client-authn-browser` was **not** designed for custom-scheme callbacks. We likely
   need `solid-client-authn-node` driving a native flow, or a thin custom DPoP/PKCE handler over the
   CSS OIDC endpoints, with the callback delivered by Tauri's deep-link plugin.
-- The "silent re-auth across siblings" SSO benefit (the shared `pod.mindpods.org` issuer) depends
+- The "silent re-auth across siblings" SSO benefit (the shared `pods.mindpods.org` issuer) depends
   on the IdP seeing its cookie — which a system browser / `ASWebAuthenticationSession` *can*
   provide but an embedded webview cannot.
 

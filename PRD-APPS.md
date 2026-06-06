@@ -54,7 +54,7 @@ VS Code's and Backstage's plugin models (full-trust code) would not be.
 | Shell context | `src/lib/shell/context.tsx` — `useShell()` → `webId`, `account`, `workspacePod`, `project`, authed `fetch`, `activeAppKey`, `setActiveApp()` | Exactly the values the bridge hands an app. `fetch` is the thing we *broker* rather than expose. |
 | Pod-driven launcher | `@mind-studio/core/launcher` `MindAppLauncher` + `@mind-studio/core/apps` (`readApps`/`writeApps`/`ensureSeeded`) reading `{pod}/home/apps.ttl` | The runtime catalog. Today every entry is a `target="_blank"` link; we add `mind:embed` so the shell knows to host instead. |
 | Add-app UI | `dock/src/app/dock/page.tsx` `AddAppDialog` → `writeApps()` | The runtime-install UX already exists. We enrich the schema it writes. |
-| Single-flight OIDC | `src/lib/solid/auth.ts` (`handleIncomingRedirect` memoized once) + shared issuer `pod.mindpods.org` | The shell owns the session; apps never need to auth themselves once brokered. |
+| Single-flight OIDC | `src/lib/solid/auth.ts` (`handleIncomingRedirect` memoized once) + shared issuer `pods.mindpods.org` | The shell owns the session; apps never need to auth themselves once brokered. |
 | Pod I/O | `src/lib/solid/pod-fs.ts` (`readdir`/`readFileText`/`writeFileText`/…) over the platform's authed fetch | The implementation behind `bridge.fetch()` — already scoped, already `no-store`. |
 
 > **Reality check from research:** *no app is embeddable today.* Both `drive` and
