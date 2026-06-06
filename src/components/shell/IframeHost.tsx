@@ -34,12 +34,21 @@ export function IframeHost({ app }: { app: HostedApp }) {
       ? "allow-scripts allow-same-origin allow-forms allow-popups"
       : "allow-scripts";
 
+  // Reset to the loading overlay ONLY when the iframe will actually (re)load —
+  // i.e. its `src` changes. The bridge effect below re-runs on every identity /
+  // project rebind, but those do NOT reload the iframe, so resetting the phase
+  // there would strand the overlay forever: `onLoad` won't fire again and a
+  // self-authenticating app (mind-drive-v0) never sends `mind:ready` to clear it.
+  // Since iframe apps are now kept alive across app switches (see ShellPage),
+  // that stranding is exactly what happened when scoping to a project.
+  useEffect(() => {
+    setPhase("loading");
+    setErrorMsg(null);
+  }, [app.url]);
+
   useEffect(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win || !webId || !workspacePod || !app.url) return;
-
-    setPhase("loading");
-    setErrorMsg(null);
 
     const bridge = createBridge({
       target: win,

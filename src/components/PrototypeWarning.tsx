@@ -11,14 +11,14 @@ export function PrototypeWarning({ className = "" }: { className?: string }) {
     <div
       role="alert"
       data-testid="prototype-warning"
-      className={`flex items-start gap-3 rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-amber-200 ${className}`}
+      className={`flex items-start gap-3 rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-amber-700 dark:text-amber-200 ${className}`}
     >
       <span aria-hidden className="text-lg leading-none">
         ⚠️
       </span>
       <div className="text-sm">
         <p className="font-semibold">Prototype — don’t use real passwords.</p>
-        <p className="mt-0.5 text-amber-200/80">
+        <p className="mt-0.5 text-amber-800 dark:text-amber-200/80">
           This Vault is an unaudited preview. Use throwaway, made-up secrets
           only — never your real accounts.
         </p>

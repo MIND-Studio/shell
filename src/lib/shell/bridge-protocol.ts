@@ -45,13 +45,23 @@ export interface HelloMsg {
   v: typeof PROTOCOL_VERSION;
 }
 
-/** Raw escape-hatch fetch (scope-checked). `init` is a serializable subset. */
+/**
+ * Raw escape-hatch fetch (scope-checked). `init` is a serializable subset.
+ * `body` is text by default; a binary request body (an upload Blob) is
+ * base64-framed with `bodyEncoding: "base64"` so it survives postMessage.
+ */
 export interface FetchMsg {
   t: "mind:fetch";
   v: typeof PROTOCOL_VERSION;
   id: string;
   url: string;
-  init?: { method?: string; headers?: Record<string, string>; body?: string };
+  init?: {
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+    bodyEncoding?: "utf8" | "base64";
+    cache?: RequestCache;
+  };
 }
 
 /** High-level verb: list a container. `path` is relative to the workspace pod. */
@@ -117,8 +127,13 @@ export interface FetchResultMsg {
   v: typeof PROTOCOL_VERSION;
   id: string;
   status: number;
+  /** The response's final URL — restored on the child's Response so RDF parsers
+   *  can resolve relative IRIs (a constructed Response otherwise has url ""). */
+  url: string;
   headers: Record<string, string>;
+  /** Text response, or base64 bytes when `encoding: "base64"` (binary files). */
   body: string;
+  encoding?: "utf8" | "base64";
 }
 
 export interface ReaddirResultMsg {

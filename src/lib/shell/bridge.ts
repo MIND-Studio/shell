@@ -9,6 +9,7 @@ import {
   type ChildMessage,
   type ParentMessage,
   type BridgeIdentity,
+  type FetchMsg,
 } from "./bridge-protocol";
 import type { HostedApp } from "./types";
 
@@ -50,6 +51,61 @@ export interface Bridge {
 
 function ensureSlash(u: string): string {
   return u.endsWith("/") ? u : u + "/";
+}
+
+// ── base64 framing for binary bodies (chunked, call-stack-safe) ──────────────
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+/**
+ * Whether a response body of this content-type is safe to ship as a UTF-8
+ * string. RDF/JSON/text go as text (cheap, debuggable); everything else —
+ * images, PDFs, octet-streams, and unknown/empty types — is base64-framed so
+ * binary bytes survive the postMessage hop intact.
+ */
+function isTextualContentType(ct: string): boolean {
+  const c = ct.toLowerCase();
+  return (
+    c.startsWith("text/") ||
+    c.includes("json") ||
+    c.includes("xml") ||
+    c.includes("javascript") ||
+    c.includes("turtle") ||
+    c.includes("trig") ||
+    c.includes("n-triples") ||
+    c.includes("n-quads") ||
+    c.includes("sparql")
+  );
+}
+
+/** Rebuild a real `RequestInit` from the serialized, possibly-base64 bridge init. */
+function toRealInit(init?: FetchMsg["init"]): RequestInit | undefined {
+  if (!init) return undefined;
+  const out: RequestInit = {};
+  if (init.method) out.method = init.method;
+  if (init.headers) out.headers = init.headers;
+  if (init.cache) out.cache = init.cache;
+  if (init.body != null) {
+    out.body =
+      init.bodyEncoding === "base64"
+        ? (base64ToBytes(init.body) as unknown as BodyInit)
+        : init.body;
+  }
+  return out;
 }
 
 function appOriginOf(app: HostedApp): string | null {
@@ -133,7 +189,7 @@ export function createBridge(opts: BridgeOptions): Bridge {
     );
   }
 
-  async function handleFetch(id: string, url: string, init?: RequestInit) {
+  async function handleFetch(id: string, url: string, init?: FetchMsg["init"]) {
     const started = performance.now();
     if (!isWithinPod(url, identity.workspacePod)) {
       logLine("fetch", url, "denied", started);
@@ -141,14 +197,30 @@ export function createBridge(opts: BridgeOptions): Bridge {
       return;
     }
     try {
-      const res = await fetchFn(url, init);
+      const res = await fetchFn(url, toRealInit(init));
       const headers: Record<string, string> = {};
       res.headers.forEach((value, key) => {
         headers[key] = value;
       });
-      const body = await res.text();
+      // Text bodies (RDF/JSON) ship as-is; binary (images, PDFs, uploads round-
+      // tripped on download) is base64-framed so the bytes survive postMessage.
+      const buf = await res.arrayBuffer();
+      const textual = isTextualContentType(res.headers.get("content-type") ?? "");
+      const body = textual
+        ? new TextDecoder().decode(buf)
+        : bytesToBase64(new Uint8Array(buf));
+      const encoding = textual ? "utf8" : "base64";
       logLine("fetch", url, res.status, started);
-      post({ t: "mind:fetch:result", v: PROTOCOL_VERSION, id, status: res.status, headers, body });
+      post({
+        t: "mind:fetch:result",
+        v: PROTOCOL_VERSION,
+        id,
+        status: res.status,
+        url: res.url || url,
+        headers,
+        body,
+        encoding,
+      });
     } catch (e) {
       logLine("fetch", url, "fail", started);
       post({ t: "mind:fail", v: PROTOCOL_VERSION, id, message: (e as Error).message });
