@@ -1,0 +1,48 @@
+# Automated changelog + release PRs from Conventional Commits.
+#
+# On every push to `main`, release-please maintains a "chore(main): release X.Y.Z"
+# PR that accumulates the generated CHANGELOG.md and bumps package.json. Merging
+# that PR creates the git tag `vX.Y.Z` + a GitHub Release, which in turn triggers
+# release.yml (the Docker build on `v*` tags).
+#
+# AUTH: we mint a short-lived token from an org-owned GitHub App (NOT the built-in
+# GITHUB_TOKEN). Two reasons:
+#   1. The default GITHUB_TOKEN is blocked from creating pull requests unless the
+#      repo setting "Allow Actions to create and approve PRs" is enabled.
+#   2. Anything done with GITHUB_TOKEN cannot trigger another workflow, so the tag
+#      it pushes would NOT fire release.yml (the Docker build). An App token is a
+#      first-class actor, so its tag push triggers release.yml.
+#
+# Auth config (org is on the Free plan, so org-level secrets do NOT reach private
+# repos — we use a per-repo secret instead):
+#   - app-id below is the org App's numeric ID (not secret, safe to commit)
+#   - repo secret RELEASE_BOT_PRIVATE_KEY = that App's generated .pem private key
+# The org App (mind-release-bot) must be installed with Contents: write +
+# Pull requests: write. Roll out to another repo = add the same repo secret there.
+
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: "3988007"
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
