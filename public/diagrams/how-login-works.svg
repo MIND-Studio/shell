@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 340" width="980" height="340" role="img" aria-label="How login works: your master password (which never leaves your device) opens a locked safe; inside is a key card made on first sign-in; only the key card crosses the network to the server, where it lets you read and write your own data.">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0d12"/>
+      <stop offset="1" stop-color="#07080b"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#67e8f9"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#ffffff" fill-opacity="0.035"/>
+    </pattern>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,1 L9,5 L0,9" fill="none" stroke="#67e8f9" stroke-width="1.4"/>
+    </marker>
+    <style>
+      .name { font-family: ui-monospace,'JetBrains Mono','SF Mono',Menlo,monospace; font-weight:700; }
+      .mono { font-family: ui-monospace,'JetBrains Mono','SF Mono',Menlo,monospace; }
+      .tag  { font-family: -apple-system,system-ui,'Segoe UI',sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Frame -->
+  <rect x="0.5" y="0.5" width="979" height="339" rx="16" fill="url(#bg)" stroke="#1e2430"/>
+  <rect x="0.5" y="0.5" width="979" height="339" rx="16" fill="url(#dots)"/>
+
+  <!-- Header -->
+  <text x="28" y="36" class="mono" font-size="13" letter-spacing="3" fill="#67e8f9">HOW LOGIN WORKS</text>
+  <text x="28" y="55" class="tag" font-size="12.5" fill="#7b8498">Your password opens a local safe &#8212; only the key card ever talks to the server.</text>
+
+  <!-- Zone labels -->
+  <text x="28" y="98" class="mono" font-size="10.5" letter-spacing="2.5" fill="#5f6b82">ON YOUR DEVICE</text>
+  <text x="730" y="98" class="mono" font-size="10.5" letter-spacing="2.5" fill="#5f6b82">THE SERVER</text>
+
+  <!-- Network divider -->
+  <line x1="710" y1="110" x2="710" y2="282" stroke="#2b3342" stroke-width="1.2" stroke-dasharray="4 5"/>
+  <text transform="translate(710,196) rotate(-90)" text-anchor="middle" class="mono" font-size="9.5" letter-spacing="2.5" fill="#4a5468">THE NETWORK</text>
+
+  <!-- ===== Card 1: master password (cyan hero) ===== -->
+  <rect x="28" y="112" width="203" height="150" rx="13" fill="#0c1820" stroke="url(#cyan)" stroke-opacity="0.55" filter="url(#glow)"/>
+  <g stroke="url(#cyan)" stroke-width="0"><circle cx="108.5" cy="150" r="4" fill="url(#cyan)"/><circle cx="124.5" cy="150" r="4" fill="url(#cyan)"/><circle cx="140.5" cy="150" r="4" fill="url(#cyan)"/><circle cx="156.5" cy="150" r="4" fill="url(#cyan)"/></g>
+  <text x="129.5" y="200" text-anchor="middle" class="name" font-size="15" fill="#eafcff">master password</text>
+  <text x="129.5" y="224" text-anchor="middle" class="mono" font-size="10" letter-spacing="0.5" fill="#67e8f9">never leaves here</text>
+
+  <!-- 1 -> 2 -->
+  <path d="M231,187 L257,187" stroke="#3a4456" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
+
+  <!-- ===== Card 2: the safe ===== -->
+  <rect x="257" y="112" width="203" height="150" rx="13" fill="#0f131a" stroke="#222a37"/>
+  <path d="M349.5,154 v-7 a9,9 0 0 1 18,0 v7" fill="none" stroke="#aeb6c6" stroke-width="1.8"/>
+  <rect x="344.5" y="154" width="28" height="21" rx="3" fill="none" stroke="#aeb6c6" stroke-width="1.8"/>
+  <circle cx="358.5" cy="164" r="2.6" fill="#aeb6c6"/>
+  <text x="358.5" y="200" text-anchor="middle" class="name" font-size="15" fill="#e8ecf4">the safe</text>
+  <text x="358.5" y="224" text-anchor="middle" class="mono" font-size="10" fill="#7c869a">a locked file on your device</text>
+
+  <!-- 2 -> 3 -->
+  <path d="M460,187 L486,187" stroke="#3a4456" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
+
+  <!-- ===== Card 3: key card ===== -->
+  <rect x="486" y="112" width="203" height="150" rx="13" fill="#0f131a" stroke="#222a37"/>
+  <rect x="565.5" y="146" width="44" height="30" rx="4" fill="#0e2630" stroke="#22d3ee" stroke-opacity="0.55"/>
+  <rect x="572.5" y="153" width="11" height="9" rx="1.5" fill="none" stroke="#22d3ee" stroke-opacity="0.7"/>
+  <line x1="565.5" y1="169" x2="609.5" y2="169" stroke="#22d3ee" stroke-opacity="0.45"/>
+  <text x="587.5" y="200" text-anchor="middle" class="name" font-size="15" fill="#e8ecf4">key card</text>
+  <text x="587.5" y="224" text-anchor="middle" class="mono" font-size="10" fill="#7c869a">made on first sign-in</text>
+
+  <!-- 3 -> 4 across the network -->
+  <path d="M689,187 L726,187" stroke="#3a4456" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
+  <text x="708" y="300" text-anchor="middle" class="mono" font-size="10" fill="#9aa3b5">only the key card travels</text>
+
+  <!-- ===== Card 4: your data (server) ===== -->
+  <rect x="730" y="112" width="222" height="150" rx="13" fill="#0f131a" stroke="#222a37"/>
+  <g stroke="#aeb6c6" stroke-width="1.8" fill="none">
+    <path d="M826,148 h22 l8,8 v22 a3,3 0 0 1 -3,3 h-27 a3,3 0 0 1 -3,-3 v-27 a3,3 0 0 1 3,-3 z"/>
+  </g>
+  <line x1="828" y1="170" x2="850" y2="170" stroke="#7c869a" stroke-width="1.6"/>
+  <line x1="828" y1="177" x2="846" y2="177" stroke="#7c869a" stroke-width="1.6"/>
+  <text x="841" y="200" text-anchor="middle" class="name" font-size="15" fill="#e8ecf4">your data</text>
+  <text x="841" y="224" text-anchor="middle" class="mono" font-size="10" fill="#7c869a">read &#38; write &#8212; only yours</text>
+
+  <!-- Footer -->
+  <text x="28" y="324" class="tag" font-size="12" fill="#6b7488">The password opens the safe; the key card does the talking.</text>
+</svg>

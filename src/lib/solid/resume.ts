@@ -25,6 +25,7 @@ import { getPlatform } from "@/lib/platform";
 import { hasWallet, getView, getPassports } from "@/lib/identity/wallet";
 import { enterPassport } from "@/lib/identity/passport-login";
 import { LAST_ACTIVE_PASSPORT_KEY, type Passport } from "@/lib/identity/types";
+import { isVerificationPending } from "@/lib/identity/email";
 import { getActivePassportSession } from "./passport-session";
 
 /** Where the front door should send the user on load. */
@@ -39,12 +40,18 @@ function readLastActivePassportId(): string | null {
   }
 }
 
-/** A passport is silently resumable iff it carries client-credentials. */
+/**
+ * A passport is silently resumable iff it carries client-credentials AND its
+ * email isn't awaiting verification. The pending guard (PRD-PROVIDER-ACCOUNTS §6)
+ * keeps us from auto-entering an account the provider hasn't confirmed yet — the
+ * user finishes verification, marks it, and only then does silent resume return.
+ */
 function isResumable(p: Passport): boolean {
   return (
     p.creds?.kind === "client-credentials" &&
     !!p.creds.id &&
-    !!p.creds.secret
+    !!p.creds.secret &&
+    !isVerificationPending(p.creds)
   );
 }
 
