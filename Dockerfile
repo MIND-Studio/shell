@@ -75,7 +75,13 @@ ENV NEXT_PUBLIC_APP_DOCK_URL=$NEXT_PUBLIC_APP_DOCK_URL \
     NEXT_PUBLIC_APP_BUILDER_URL=$NEXT_PUBLIC_APP_BUILDER_URL \
     NEXT_PUBLIC_APP_CODESPACES_URL=$NEXT_PUBLIC_APP_CODESPACES_URL
 
-RUN npm run build
+# Build with Webpack, not Turbopack. Next 16 defaults `next build` to Turbopack,
+# which requires native swc bindings and has NO WASM fallback; the linux-x64 swc
+# binary isn't reliably installed by `npm ci` in this image, so Turbopack aborts
+# (Error: "Turbopack is not supported on this platform"). Webpack is the supported
+# fallback Next itself recommends and emits the same .next/standalone output. Local
+# `next dev` still uses Turbopack (darwin swc is present).
+RUN npm run build -- --webpack
 
 # --- Stage 2: runtime ------------------------------------------------------
 FROM node:22-bookworm-slim AS runtime
