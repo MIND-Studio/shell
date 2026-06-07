@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/MIND-Studio/shell/compare/v0.2.1...v0.2.2) (2026-06-07)
+
+
+### Bug Fixes
+
+* **docker:** force-install native swc, build with Turbopack ([#6](https://github.com/MIND-Studio/shell/issues/6)) ([9cff50f](https://github.com/MIND-Studio/shell/commit/9cff50f3b994d7c99af09476273c3c87b11e3a35))
+
 ## [0.2.1](https://github.com/MIND-Studio/shell/compare/v0.2.0...v0.2.1) (2026-06-07)
 
 
