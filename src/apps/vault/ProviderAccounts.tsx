@@ -250,6 +250,7 @@ function Field({
 
 function AccountRow({ account }: { account: ProviderAccount }) {
   const [revealed, setRevealed] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const { apps } = useShell();
 
   // P4: how you'll get in. Brokered handoff over the capability bridge (PRD-APPS)
@@ -304,11 +305,23 @@ function AccountRow({ account }: { account: ProviderAccount }) {
             size="sm"
             variant="outline"
             className="shrink-0"
-            onClick={() => void markEmailVerified(account.id)}
+            onClick={async () => {
+              setVerifyError(null);
+              try {
+                await markEmailVerified(account.id);
+              } catch (err) {
+                setVerifyError(
+                  err instanceof Error ? err.message : "Couldn't mark this verified."
+                );
+              }
+            }}
           >
             Mark verified
           </Button>
         </div>
+      )}
+      {verifyError && (
+        <p className="mt-1 text-xs text-[color:var(--destructive)]">{verifyError}</p>
       )}
 
       <Separator className="my-2" />
