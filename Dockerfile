@@ -48,6 +48,15 @@ RUN --mount=type=secret,id=node_auth_token \
     NODE_AUTH_TOKEN="$(cat /run/secrets/node_auth_token 2>/dev/null || true)" \
     npm ci --no-audit --no-fund
 
+# Guarantee Next's native swc binary. `npm ci` intermittently omits a
+# platform-optional native dep even when it's correctly in the lockfile
+# (npm/cli #4828) — and Next 16's Turbopack has NO WASM fallback, so a missing
+# binary aborts the build ("Turbopack is not supported on this platform"). We
+# force-install the linux-x64 binary matching the resolved next version so the
+# build never depends on npm-ci luck. It's a public package (no GHCR auth), and
+# `--no-save` leaves package.json/lock untouched.
+RUN npm install --no-save "@next/swc-linux-x64-gnu@$(node -p "require('next/package.json').version")"
+
 COPY . .
 RUN mkdir -p public
 
@@ -75,13 +84,10 @@ ENV NEXT_PUBLIC_APP_DOCK_URL=$NEXT_PUBLIC_APP_DOCK_URL \
     NEXT_PUBLIC_APP_BUILDER_URL=$NEXT_PUBLIC_APP_BUILDER_URL \
     NEXT_PUBLIC_APP_CODESPACES_URL=$NEXT_PUBLIC_APP_CODESPACES_URL
 
-# Build with Webpack, not Turbopack. Next 16 defaults `next build` to Turbopack,
-# which requires native swc bindings and has NO WASM fallback; the linux-x64 swc
-# binary isn't reliably installed by `npm ci` in this image, so Turbopack aborts
-# (Error: "Turbopack is not supported on this platform"). Webpack is the supported
-# fallback Next itself recommends and emits the same .next/standalone output. Local
-# `next dev` still uses Turbopack (darwin swc is present).
-RUN npm run build -- --webpack
+# Build with Turbopack — Next 16's default and the same bundler as `next dev`
+# and the rest of the fleet (dev/prod parity). The native swc binary it needs is
+# guaranteed by the force-install above, so this no longer falls back to Webpack.
+RUN npm run build
 
 # --- Stage 2: runtime ------------------------------------------------------
 FROM node:22-bookworm-slim AS runtime
