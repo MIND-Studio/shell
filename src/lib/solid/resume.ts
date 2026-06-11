@@ -41,12 +41,16 @@ function readLastActivePassportId(): string | null {
 }
 
 /**
- * A passport is silently resumable iff it carries client-credentials AND its
- * email isn't awaiting verification. The pending guard (PRD-PROVIDER-ACCOUNTS §6)
- * keeps us from auto-entering an account the provider hasn't confirmed yet — the
- * user finishes verification, marks it, and only then does silent resume return.
+ * A passport is silently resumable iff the unlocked wallet can re-establish its
+ * session with no user input:
+ *   - `client-credentials`: re-mint a token from the sealed `{id,secret}` (and
+ *     only once its email isn't awaiting verification — PRD-PROVIDER-ACCOUNTS §6,
+ *     so we never auto-enter an account the provider hasn't confirmed yet).
+ *   - `did`: re-sign a fresh server challenge with the master `did:key` — no
+ *     stored secret needed, so always resumable while the wallet is unlocked.
  */
 function isResumable(p: Passport): boolean {
+  if (p.creds?.kind === "did") return true;
   return (
     p.creds?.kind === "client-credentials" &&
     !!p.creds.id &&

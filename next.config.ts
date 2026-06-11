@@ -17,6 +17,10 @@ const isTauri = process.env.TAURI === "1" || process.env.TAURI === "true";
 const nextConfig: NextConfig = {
   output: isTauri ? "export" : "standalone",
   transpilePackages: ["@mind-studio/core", "@mind-studio/ui"],
+  // Hide the dev-only Next.js indicator badge: it renders INSIDE every first-party
+  // widget iframe on Home (a black "N" in each tile) and clutters the dashboard.
+  // Dev-only chrome; no effect on prod builds.
+  devIndicators: false,
   // `next/image` optimization needs a server; under static export it must be
   // unoptimized or the build errors. Harmless for the web build (we don't rely
   // on the optimizer), so set it only for the Tauri target.

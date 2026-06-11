@@ -89,9 +89,12 @@ export function AccountSwitcher({ variant = "bar" }: { variant?: "bar" | "compac
   // A remembered account that is also one of our passports should show the name
   // the user chose at creation, not its raw pod slug. Match by WebID; fall back
   // to prettifying the slug (strip the `-<hex>` collision suffix) so the switcher
-  // never surfaces "personal-c7668c96".
+  // never surfaces "personal-c7668c96". Workspace records reuse the master WebID,
+  // so including them would relabel the identity with the workspace's name.
   const labelByWebId = new Map(
-    (wallet.passports ?? []).filter((p) => p.label).map((p) => [p.webId, p.label as string])
+    (wallet.passports ?? [])
+      .filter((p) => p.label && !p.workspace)
+      .map((p) => [p.webId, p.label as string])
   );
   const friendlyName = (a: (typeof others)[number]) =>
     labelByWebId.get(a.webId) ?? (a.displayName ? prettySlug(a.displayName) : hostOf(a.webId));
@@ -198,7 +201,10 @@ export function AccountSwitcher({ variant = "bar" }: { variant?: "bar" | "compac
               </DropdownMenuLabel>
               {others.map((a) => (
                 <DropdownMenuItem key={a.webId} asChild>
-                  <Link href="/connect">
+                  {/* ?switch=1: tell /connect we mean to re-auth as someone else —
+                      without it the active session renders the "Connected" card
+                      and the switch dead-ends. */}
+                  <Link href="/connect?switch=1">
                     <span className="truncate">{friendlyName(a)}</span>
                   </Link>
                 </DropdownMenuItem>
@@ -213,7 +219,7 @@ export function AccountSwitcher({ variant = "bar" }: { variant?: "bar" | "compac
             </DropdownMenuItem>
           )}
           <DropdownMenuItem asChild>
-            <Link href="/connect">Add account</Link>
+            <Link href="/connect?switch=1">Add account</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/settings">Account settings</Link>

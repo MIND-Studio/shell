@@ -20,7 +20,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label } from "@mind-studio/ui";
-import { DEFAULT_ISSUER } from "@/lib/solid/session";
+import { rememberIssuer, storedIssuer } from "@/lib/solid/session";
 import {
   loginToAccount,
   accountWebIds,
@@ -34,7 +34,9 @@ export default function PasswordLoginCard() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [server, setServer] = useState(DEFAULT_ISSUER);
+  // Lazy init: the last server actually signed into (WorkspaceRail does the
+  // same), so a localhost/self-hosted user isn't silently sent back to prod.
+  const [server, setServer] = useState(() => storedIssuer());
   const [showServer, setShowServer] = useState(false);
   // When an account links several WebIDs, we surface a picker instead of guessing.
   const [choices, setChoices] = useState<string[] | null>(null);
@@ -79,6 +81,11 @@ export default function PasswordLoginCard() {
         id: creds.id,
         secret: creds.secret,
       });
+
+      // Persist the issuer so every storedIssuer() consumer (workspace
+      // provisioning, DID probe, next sign-in) targets the server this
+      // session actually lives on — not the prod default.
+      rememberIssuer(server);
 
       // If a wallet is unlocked, seal these credentials as a resumable passport so
       // the next visit resumes this identity headlessly. Best-effort: the session
@@ -160,7 +167,15 @@ export default function PasswordLoginCard() {
       <p className="mt-1 text-sm text-muted-foreground">
         Sign in right here with your account email and password — no redirect.
       </p>
-      <div className="mt-4 space-y-3">
+      {/* A real <form> so Enter submits from any field and the browser's
+          password manager can offer to save/fill the credentials. */}
+      <form
+        className="mt-4 space-y-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void signIn();
+        }}
+      >
         <Field
           id="pw-email"
           label="Account email"
@@ -175,7 +190,6 @@ export default function PasswordLoginCard() {
           type="password"
           value={password}
           onChange={setPassword}
-          onEnter={() => void signIn()}
           autoComplete="current-password"
         />
 
@@ -193,10 +207,10 @@ export default function PasswordLoginCard() {
         )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Button onClick={() => void signIn()} disabled={busy} className="w-full">
+        <Button type="submit" disabled={busy} className="w-full">
           {busy ? "Signing in…" : "Sign in"}
         </Button>
-      </div>
+      </form>
     </Card>
   );
 }
@@ -222,7 +236,6 @@ function Field({
   onChange,
   type = "text",
   autoComplete,
-  onEnter,
 }: {
   id: string;
   label: string;
@@ -230,7 +243,6 @@ function Field({
   onChange: (v: string) => void;
   type?: string;
   autoComplete?: string;
-  onEnter?: () => void;
 }) {
   return (
     <div className="space-y-1.5">
@@ -241,9 +253,6 @@ function Field({
         value={value}
         autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && onEnter) onEnter();
-        }}
       />
     </div>
   );

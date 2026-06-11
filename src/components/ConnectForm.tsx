@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   MindLoginCard,
@@ -28,9 +29,14 @@ export default function ConnectForm() {
   // ways in behind a link. Read after mount (localStorage is client-only).
   const [returning, setReturning] = useState(false);
   const [showOthers, setShowOthers] = useState(false);
+  // "Switching" = the account menu sent us here (?switch=1) to sign in as a
+  // different account. Without it, an active session renders the "Connected"
+  // card and the switch dead-ends on the account you already are.
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     setReturning(hasWallet() && getView().status === "locked");
+    setSwitching(new URLSearchParams(window.location.search).has("switch"));
   }, []);
 
   useEffect(() => {
@@ -50,7 +56,13 @@ export default function ConnectForm() {
       if (!id) return;
       writeLastIdentity(APP_NAME, {
         webId: id,
-        displayName: id.split("/").filter(Boolean).pop(),
+        // The pod slug, not the WebID's literal tail — every CSS WebID ends in
+        // /profile/card#me, which made the login card greet "Continue as card#me".
+        displayName: id
+          .replace(/\/profile\/card#me$/, "")
+          .split("/")
+          .filter(Boolean)
+          .pop(),
       });
       if (navigate) router.replace("/shell");
       else setWebId(id);
@@ -107,7 +119,7 @@ export default function ConnectForm() {
     setWebId(null);
   }
 
-  if (webId) {
+  if (webId && !switching) {
     return (
       <div className="rounded-lg border border-primary/40 bg-primary/5 p-5">
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
@@ -118,7 +130,9 @@ export default function ConnectForm() {
         </p>
         <div className="mt-4 flex gap-3">
           <Button asChild>
-            <a href="/shell">Enter the shell →</a>
+            {/* SPA nav — the passport session and wallet unlock live in tab
+                memory, so a full-page <a> here would sign the user out. */}
+            <Link href="/shell">Enter the shell →</Link>
           </Button>
           <Button variant="outline" onClick={onLogout}>
             Disconnect
@@ -151,6 +165,34 @@ export default function ConnectForm() {
       {error}
     </p>
   );
+
+  // Switching accounts while a session is active: skip the "Connected" card and
+  // lead with the sign-in options. The current session stays live until the new
+  // sign-in replaces it, so backing out loses nothing.
+  if (webId && switching) {
+    return (
+      <div className="space-y-6">
+        <div
+          className="rounded-lg border border-[color:var(--border)] bg-muted/40 p-4"
+          data-testid="switching-banner"
+        >
+          <p className="text-sm text-muted-foreground">
+            You’re still signed in as
+            <span className="mt-1 block break-all font-mono text-xs">{webId}</span>
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sign in below to switch accounts, or{" "}
+            <Link href="/shell" className="text-primary underline-offset-2 hover:underline">
+              keep your current session →
+            </Link>
+          </p>
+        </div>
+        <PasswordLoginCard />
+        {redirectCard}
+        {errorBanner}
+      </div>
+    );
+  }
 
   // Returning user: lead with the one-tap unlock hero (WalletOnboarding shows the
   // unlock card for a locked wallet); everything else is collapsed behind a link.

@@ -26,6 +26,7 @@ import { useShell } from "@/lib/shell/context";
 import type { Workspace } from "@/lib/shell/types";
 import { DEFAULT_ISSUER, storedIssuer } from "@/lib/solid/session";
 import { serverSupportsDid } from "@/lib/solid/did-account";
+import { serverSupportsAccountCreation } from "@/lib/solid/account";
 import { serverRequiresEmailVerification } from "@/lib/solid/email-verification";
 import { isValidEmail, suggestPlusAlias } from "@/lib/identity/email";
 import { willSealWorkspaceLogin } from "@/lib/identity/provider-entry";
@@ -210,6 +211,9 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [didAware, setDidAware] = useState<boolean | null>(null);
+  // Whether the server has an account-creation API at all. A DID-only server
+  // (one pod per identity, made at sign-in) doesn't — creating would just 401.
+  const [canCreate, setCanCreate] = useState<boolean | null>(null);
   // Bring-your-own-email branch (PRD-PROVIDER-ACCOUNTS §6). Off by default (the
   // shell mints a throwaway placeholder); auto-enabled when the server verifies.
   const [useOwnEmail, setUseOwnEmail] = useState(false);
@@ -234,8 +238,12 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
     let cancelled = false;
     setDidAware(null);
     setVerifies(null);
+    setCanCreate(null);
     void serverSupportsDid(server).then((ok) => {
       if (!cancelled) setDidAware(ok);
+    });
+    void serverSupportsAccountCreation(server).then((ok) => {
+      if (!cancelled) setCanCreate(ok);
     });
     void serverRequiresEmailVerification(server).then((req) => {
       if (cancelled) return;
@@ -249,6 +257,21 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
 
   const emailOk = !useOwnEmail || isValidEmail(email.trim());
   const ready = Boolean(name.trim()) && emailOk;
+
+  // Cross-issuer caveat: a pod on another server is WAC-owned by this WebID but
+  // the current session's token is only honoured by the identity's own issuer —
+  // every read/write of the new pod 401s until you sign in to that server
+  // directly. Creation still works; warn so the dead-looking workspace isn't a
+  // surprise.
+  const crossIssuer = (() => {
+    try {
+      const issuer = storedIssuer();
+      if (!issuer || !server) return false;
+      return new URL(server).origin !== new URL(issuer).origin;
+    } catch {
+      return false;
+    }
+  })();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -281,31 +304,39 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? "ws-create-error" : undefined}
         />
-        <p className="text-xs text-muted-foreground">
-          {willStoreLogin ? (
-            <>
-              That&rsquo;s all we need — the shell creates the pod and saves its
-              login to your Vault (under &ldquo;Provider accounts&rdquo;), so you
-              can sign in to it directly later.
-            </>
-          ) : (
-            <>
-              That&rsquo;s all we need — the shell creates the pod.{" "}
-              <span className="text-[color:var(--destructive)]">
-                {hasWallet
-                  ? "Unlock your master identity to also save its login to your Vault."
-                  : "Set up a master identity to save its login to your Vault for direct sign-in."}
-              </span>
-            </>
-          )}{" "}
-          {didAware === true && hasWallet ? (
-            <span className="text-primary">This server supports DID — it&rsquo;ll be linked.</span>
-          ) : didAware === true && !hasWallet ? (
-            <span>Set up a master identity to link a DID here.</span>
-          ) : didAware === false && willStoreLogin ? (
-            <span>This server has no DID — credentials are saved instead.</span>
-          ) : null}
-        </p>
+        {canCreate === false ? (
+          <p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs leading-snug text-amber-700 dark:text-amber-200">
+            This server can&rsquo;t create extra pods — it makes one pod per
+            identity, at sign-in. Use &ldquo;Join existing&rdquo; to add a pod
+            you already have access to, or choose a different server below.
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            {willStoreLogin ? (
+              <>
+                That&rsquo;s all we need — the shell creates the pod and saves its
+                login to your Vault (under &ldquo;Provider accounts&rdquo;), so you
+                can sign in to it directly later.
+              </>
+            ) : (
+              <>
+                That&rsquo;s all we need — the shell creates the pod.{" "}
+                <span className="text-[color:var(--destructive)]">
+                  {hasWallet
+                    ? "Unlock your master identity to also save its login to your Vault."
+                    : "Set up a master identity to save its login to your Vault for direct sign-in."}
+                </span>
+              </>
+            )}{" "}
+            {didAware === true && hasWallet ? (
+              <span className="text-primary">This server supports DID — it&rsquo;ll be linked.</span>
+            ) : didAware === true && !hasWallet ? (
+              <span>Set up a master identity to link a DID here.</span>
+            ) : didAware === false && willStoreLogin ? (
+              <span>This server has no DID — credentials are saved instead.</span>
+            ) : null}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -379,6 +410,17 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
             Where the pod lives. A DID-aware CSS links your identity; a stock one
             still works.
           </p>
+          {crossIssuer && canCreate !== false && (
+            <p
+              data-testid="ws-cross-issuer-warning"
+              className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs leading-snug text-amber-700 dark:text-amber-200"
+            >
+              Heads-up: your sign-in lives on a different server, so this
+              workspace will look empty here — its pod only answers a session
+              from its own server. Its login is saved to your Vault for signing
+              in there directly.
+            </p>
+          )}
         </div>
       )}
 
@@ -388,7 +430,7 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
         </p>
       )}
       <DialogFooter className="mt-6">
-        <Button type="submit" disabled={busy || !ready}>
+        <Button type="submit" disabled={busy || !ready || canCreate === false}>
           {busy ? "Creating…" : "Create workspace"}
         </Button>
       </DialogFooter>

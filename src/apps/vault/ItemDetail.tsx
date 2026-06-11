@@ -8,6 +8,7 @@ import { copyWithAutoClear } from "@/lib/vault/clipboard";
 
 const TOTP_PERIOD = 30;
 const TOTP_DIGITS = 6;
+const REVEAL_TTL_MS = 30_000;
 
 type BreachState =
   | { status: "idle" }
@@ -44,6 +45,14 @@ export function ItemDetail({
     setRevealed(false);
     setBreach({ status: "idle" });
   }, [meta.id]);
+
+  // Display values are short-lived (crypto contract): a revealed password
+  // re-masks after 30s, matching the clipboard's auto-clear window.
+  useEffect(() => {
+    if (!revealed) return;
+    const id = setTimeout(() => setRevealed(false), REVEAL_TTL_MS);
+    return () => clearTimeout(id);
+  }, [revealed]);
 
   // TOTP tick.
   useEffect(() => {

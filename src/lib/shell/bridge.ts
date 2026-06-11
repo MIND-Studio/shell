@@ -1,4 +1,9 @@
-import { readdir, readFileText, writeFileText } from "@/lib/solid/pod-fs";
+import {
+  readdir,
+  readFileText,
+  writeFileText,
+  ensureContainerChain,
+} from "@/lib/solid/pod-fs";
 import {
   subscribePassportSession,
   getActivePassportSession,
@@ -42,10 +47,37 @@ export interface BridgeOptions {
   theme: BridgeTheme;
   /** The shell's authed fetch (platform pod.fetch via useShell().fetch). */
   fetch: typeof fetch;
+  /**
+   * The TRUE workspace pod root — the floor for container-chain creation on write.
+   * `identity.workspacePod` may be NARROWED to a widget's app zone (the scope
+   * ceiling), so it can't be used to create the chain down to a fresh zone. This
+   * is an ancestor of that ceiling, so every container `ensureContainerChain`
+   * makes still lands inside the granted scope. Absent ⇒ `identity.workspacePod`.
+   */
+  podRoot?: string;
+  /**
+   * Whether the host honors `mind:write` from this frame. Plain hosted apps get
+   * the full `pod:workspace-rw` contract (default `true`); Home widgets are
+   * read-first and pass `false` unless they declared `write:true` (PRD posture).
+   */
+  allowWrite?: boolean;
   /** Fired on `mind:ready`. */
   onReady?: () => void;
   /** Fired on `mind:error`. */
   onAppError?: (message: string) => void;
+  /**
+   * Fired on `mind:resize` (v2 self-sizing) with a pre-sanitized, host-bounded
+   * pixel height. The host (`WidgetTile`) still clamps to the tile's grid bounds;
+   * this is the coarse safety clamp so a hostile child can't pass NaN/∞/huge.
+   */
+  onResize?: (height: number) => void;
+  /**
+   * Fired on `mind:open` (a widget item was clicked) with the child's optional,
+   * UNTRUSTED resource hint. The host decides what to do — `WidgetTile` switches
+   * the shell to the widget's OWN owning app (the child can't name another). No
+   * pod access happens here; it's a pure navigation request.
+   */
+  onOpen?: (path?: string) => void;
 }
 
 export interface Bridge {
@@ -151,16 +183,35 @@ function resolveUnderPod(path: string, workspacePod: string): string | null {
   return isWithinPod(resolved, base) ? resolved : null;
 }
 
+/** Coarse ceiling for a child-requested height — the tile clamps finer (px). */
+const MAX_RESIZE_PX = 4000;
+
 export function createBridge(opts: BridgeOptions): Bridge {
-  const { target, app, identity, fetch: fetchFn, onReady, onAppError } = opts;
+  const { target, app, identity, fetch: fetchFn, onReady, onAppError, onResize, onOpen } = opts;
+  // Read-first default for the WRITE gate is per-frame; container-creation floor
+  // falls back to the (possibly narrowed) scope ceiling when no true root is given.
+  const allowWrite = opts.allowWrite ?? true;
+  const podRoot = opts.podRoot ?? identity.workspacePod;
   const expectedOrigin = appOriginOf(app);
   // Opaque-origin (sandbox="allow-scripts") frames report origin "null" and can
   // only receive a "*" post; first-party (allow-same-origin) frames keep their
   // real origin, so we pin the post to it.
   const sendOrigin = app.trust === "first-party" && expectedOrigin ? expectedOrigin : "*";
 
+  // Negotiated protocol version: the version the CHILD speaks, learned from its
+  // first message. The shell understands every protocol from 1..PROTOCOL_VERSION
+  // (see `isBridgeMessage`), but a child pins its receiver to its OWN version and
+  // drops any reply tagged otherwise (the sibling brokers gate on `v === 1`). So
+  // every reply must echo the child's version, not the host's newest — else a v1
+  // app (Drive/Notes/Photos/…) never gets its welcome, times out, and falls back
+  // to its own sign-in on the wrong pod. Defaults to the host's newest until the
+  // first inbound message; the child re-sends `mind:hello` until welcomed, so a
+  // too-new proactive welcome before handshake is harmless.
+  let clientVersion: number = PROTOCOL_VERSION;
+
   function post(msg: ParentMessage) {
-    target.postMessage(msg, sendOrigin);
+    // Stamp the reply with the child's negotiated version (see `clientVersion`).
+    target.postMessage({ ...msg, v: clientVersion }, sendOrigin);
   }
 
   // The identity handed to the app. webId can change under a mounted frame when a
@@ -263,6 +314,22 @@ export function createBridge(opts: BridgeOptions): Bridge {
         logLine(msg.t, resolved, "ok", started);
         post({ t: "mind:read:result", v: PROTOCOL_VERSION, id: msg.id, body });
       } else if (msg.t === "mind:write") {
+        // Read-first gate: a frame that wasn't granted write can't slip one past
+        // the scope check. Denied like an out-of-scope request (no pod call runs).
+        if (!allowWrite) {
+          logLine(msg.t, resolved, "denied", started);
+          post({
+            t: "mind:denied",
+            v: PROTOCOL_VERSION,
+            id: msg.id,
+            reason: "write not permitted for this widget",
+          });
+          return;
+        }
+        // The PUT replaces a whole resource but won't create its parents; build
+        // the container chain from the true pod root down (all inside scope).
+        const parent = resolved.slice(0, resolved.lastIndexOf("/") + 1);
+        await ensureContainerChain(parent, podRoot);
         await writeFileText(resolved, msg.body, msg.contentType);
         logLine(msg.t, resolved, "ok", started);
         post({ t: "mind:write:result", v: PROTOCOL_VERSION, id: msg.id, ok: true });
@@ -282,6 +349,11 @@ export function createBridge(opts: BridgeOptions): Bridge {
     if (!isBridgeMessage(event.data)) return;
     const msg = event.data as ChildMessage;
 
+    // Negotiate down to the child's protocol version so our replies are tagged
+    // with a version it accepts (it drops anything else). `isBridgeMessage` has
+    // already bounded it to [1, PROTOCOL_VERSION].
+    clientVersion = event.data.v;
+
     switch (msg.t) {
       case "mind:hello":
         welcome();
@@ -291,6 +363,18 @@ export function createBridge(opts: BridgeOptions): Bridge {
       case "mind:read":
       case "mind:write":
         void handleVerb(msg);
+        break;
+      case "mind:resize":
+        // Host-side safety clamp (finite, non-negative, capped). The tile applies
+        // the finer grid-bounds clamp; here we just refuse garbage.
+        if (Number.isFinite(msg.height)) {
+          onResize?.(Math.max(0, Math.min(msg.height, MAX_RESIZE_PX)));
+        }
+        break;
+      case "mind:open":
+        // Pure navigation hint — no pod access, no scope check needed. The host
+        // (WidgetTile) ignores the path and just opens this widget's owning app.
+        onOpen?.(msg.path);
         break;
       case "mind:ready":
         onReady?.();

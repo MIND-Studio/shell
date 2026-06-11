@@ -85,7 +85,15 @@ export default function IdentityApp() {
         {view.status === "none" && <CreateScreen />}
         {view.status === "locked" && <UnlockScreen did={view.did!} />}
         {view.status === "unlocked" && (
-          <Dashboard did={view.did!} passports={view.passports ?? []} />
+          <Dashboard
+            did={view.did!}
+            // Hybrid-workspace records live in the registry only so their
+            // generated login stays sealed — they reuse the master WebID, so
+            // they're workspaces in the rail, not identities. Listing them here
+            // miscounts "Passports" and dead-ends on "Sign in as this passport"
+            // (the user never saw the generated password).
+            passports={(view.passports ?? []).filter((p) => !p.workspace)}
+          />
         )}
       </div>
     </div>
@@ -250,8 +258,8 @@ function Dashboard({ did, passports }: { did: string; passports: Passport[] }) {
     <div className="space-y-5">
       {/* Active-passport banner: you're acting as a passport, not your main WebID */}
       {activePassport && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
-          <div className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+          <div className="min-w-0 flex-1 basis-56">
             <p className="text-sm font-medium">
               🪪 Signed in as {activePassport.label || hostOf(activePassport.server)}
             </p>
@@ -546,16 +554,25 @@ function PassportRow({
     setDidMsg(null);
     setDidVerdict(null);
     try {
-      const token = await loginWithDid({ did, sign: walletSign, server: passport.server });
-      const root = passport.server.endsWith("/") ? passport.server : passport.server + "/";
-      const res = await fetch(`${root}.account/`, {
-        headers: { Authorization: `CSS-Account-Token ${token}`, Accept: "application/json" },
-      });
-      const authed = res.ok && Boolean((await res.json())?.controls?.account);
+      const { token, webId } = await loginWithDid({ did, sign: walletSign, server: passport.server });
+      // Positive confirmation, server-agnostically: a DID-session server
+      // (solid-server-rs) returns the authenticated WebID directly; the CSS
+      // DID-fork returns no WebID, so we confirm the token unlocks the account
+      // controls (authed-only) instead.
+      let authed = Boolean(webId);
+      if (!authed) {
+        const root = passport.server.endsWith("/") ? passport.server : passport.server + "/";
+        const res = await fetch(`${root}.account/`, {
+          headers: { Authorization: `CSS-Account-Token ${token}`, Accept: "application/json" },
+        });
+        authed = res.ok && Boolean((await res.json())?.controls?.account);
+      }
       if (authed) {
         setDidVerdict("ok");
         setDidMsg(
-          "Authenticated to this account by signing a challenge — no password. A fresh account token was minted."
+          webId
+            ? `Authenticated as ${webId} by signing a challenge — no password.`
+            : "Authenticated to this account by signing a challenge — no password. A fresh account token was minted."
         );
         // A successful login proves the DID is linked; remember it for the badge.
         if (!passport.didLinked) await updatePassport(passport.id, { didLinked: true });

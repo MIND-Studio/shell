@@ -13,10 +13,17 @@ import { lazy, type ComponentType } from "react";
  */
 const VaultApp = lazy(() => import("./vault"));
 const IdentityApp = lazy(() => import("./identity"));
+const WalletApp = lazy(() => import("./wallet"));
+// Home is the shell's own default surface (a grid of iframe widget tiles), keyed
+// by the synthetic `__home__` slug. It's in-process like Vault/Identity — the
+// *surface* is shell code; every tile inside it is a sandboxed app widget.
+const HomeApp = lazy(() => import("./home"));
 
 export const APP_REGISTRY: Record<string, ComponentType> = {
+  __home__: HomeApp,
   vault: VaultApp,
   identity: IdentityApp,
+  wallet: WalletApp,
 };
 
 export function getAppComponent(key: string): ComponentType | null {

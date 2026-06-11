@@ -194,7 +194,35 @@ export function ItemEditor({
                     onChange={(e) => setPassword(e.target.value)}
                     className="font-mono"
                   />
-                  <Button type="button" variant="outline" onClick={() => setShowGen((s) => !s)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-expanded={showGen}
+                    onClick={async () => {
+                      if (showGen) {
+                        setShowGen(false);
+                        return;
+                      }
+                      // Fill the field right away so the button does what it
+                      // says; the panel below opens for tweaking/regenerating.
+                      // Defaults mirror PasswordGenerator's initial options.
+                      try {
+                        setPassword(
+                          await core.generatePassword({
+                            length: 20,
+                            upper: true,
+                            lower: true,
+                            digits: true,
+                            symbols: true,
+                            avoidAmbiguous: true,
+                          })
+                        );
+                      } catch {
+                        // Panel still opens; its own Generate surfaces errors.
+                      }
+                      setShowGen(true);
+                    }}
+                  >
                     Generate
                   </Button>
                 </div>

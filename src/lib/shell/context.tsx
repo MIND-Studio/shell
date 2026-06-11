@@ -40,6 +40,7 @@ import type {
   WorkspaceRole,
   Project,
   HostedApp,
+  WidgetDecl,
   AccountIdentity,
 } from "./types";
 
@@ -82,6 +83,25 @@ const DRIVE_ORIGIN = process.env.NEXT_PUBLIC_APP_DRIVE_URL ?? "http://localhost:
 const DRIVE_URL = `${DRIVE_ORIGIN.replace(/\/$/, "")}/drive`;
 
 /**
+ * The pod-suite siblings (notes/contacts/calendar/photos) are hosted exactly
+ * like Drive: from their own origin, embedded at their app route rather than
+ * the marketing root, self-authenticating inside the frame.
+ */
+function siblingUrl(envOrigin: string | undefined, devPort: number, route: string): string {
+  const origin = envOrigin ?? `http://localhost:${devPort}`;
+  return `${origin.replace(/\/$/, "")}${route}`;
+}
+const NOTES_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_NOTES_URL, 3120, "/notes");
+const CONTACTS_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_CONTACTS_URL, 3130, "/contacts");
+const CALENDAR_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_CALENDAR_URL, 3140, "/calendar");
+const PHOTOS_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_PHOTOS_URL, 3150, "/photos");
+// Slides (mind-slides-v0) is embedded at its `/studio` route. It brokers like the
+// rest of the suite (its `src/lib/solid/broker.ts` does the v1 handshake), so
+// embedded it uses the shell's SSO + pod — decks save to `{shellPod}mind-slides/
+// decks/`, which the Decks widget reads back.
+const SLIDES_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_SLIDES_URL, 3105, "/studio");
+
+/**
  * The built-in apps the shell always offers (PRD §3) — present in every
  * workspace and account, no per-pod install/seed needed.
  *
@@ -92,10 +112,129 @@ const DRIVE_URL = `${DRIVE_ORIGIN.replace(/\/$/, "")}/drive`;
  * its own `<#drive>` is fine: the catalog merge below drops any entry whose key
  * is already a built-in, so Drive never doubles up.
  */
+/**
+ * The reference Home widget (PRD-DASHBOARD §7), served by the shell itself at
+ * `/widget/recent`. It's a DELETABLE demo: the first real consumer of the
+ * capability bridge, attached to a built-in app so default Home has one tile
+ * before any sibling app ships its own widget URL. Real widgets are served from
+ * each app's OWN origin and declared in the pod catalog (`mind:Widget`), not here.
+ *
+ * `trust:"first-party"` because the shell serves it (same origin) — it still only
+ * receives identifiers + brokered, scope-checked reads, never a credential.
+ */
+const RECENT_WIDGET: WidgetDecl = {
+  id: "recent",
+  label: "Recent",
+  icon: "🕘",
+  size: "m",
+  maxSize: "l",
+  scope: "",
+  // Drive stores files at `{pod}mind-drive/files/`, NOT the canonical `apps/drive/`
+  // zone — so the ceiling is overridden to Drive's real namespace, else the widget
+  // reads an empty container and shows nothing even after files are added in Drive.
+  podPath: "mind-drive/files/",
+  url: "/widget/recent",
+  trust: "first-party",
+};
+
+// An INTERACTIVE reference widget: composes + lists notes in the owning app's
+// zone. `write:true` opts it into brokered, scope-checked writes (the host denies
+// writes from any widget that didn't). Deletable demo, like RECENT_WIDGET.
+const QUICK_NOTE_WIDGET: WidgetDecl = {
+  id: "quick-note",
+  label: "Quick Note",
+  icon: "📝",
+  size: "m",
+  maxSize: "l",
+  scope: "",
+  url: "/widget/quick-note",
+  trust: "first-party",
+  write: true,
+};
+
+// Read-only reference widgets for the rest of the pod suite. Each is ceilinged to
+// its owning app's CANONICAL zone (`apps/{key}/`) — verified against each sibling's
+// config — so no `podPath` override is needed (unlike Drive). All deletable demos.
+const UP_NEXT_WIDGET: WidgetDecl = {
+  id: "up-next",
+  label: "Up Next",
+  icon: "📅",
+  size: "s",
+  maxSize: "m",
+  scope: "",
+  url: "/widget/up-next",
+  trust: "first-party",
+};
+const PEOPLE_WIDGET: WidgetDecl = {
+  id: "people",
+  label: "People",
+  icon: "👥",
+  size: "s",
+  maxSize: "m",
+  scope: "",
+  url: "/widget/people",
+  trust: "first-party",
+};
+const GALLERY_WIDGET: WidgetDecl = {
+  id: "gallery",
+  label: "Gallery",
+  icon: "🖼️",
+  size: "m",
+  maxSize: "l",
+  scope: "",
+  url: "/widget/gallery",
+  trust: "first-party",
+};
+// Slides stores decks at `{pod}mind-slides/decks/{id}/` (NOT the canonical
+// `apps/slides/` zone), so the ceiling is overridden to its real namespace — same
+// pattern as Drive. Each deck is a container with a `meta.json` (title inside).
+const DECKS_WIDGET: WidgetDecl = {
+  id: "decks",
+  label: "Decks",
+  icon: "🖥️",
+  size: "s",
+  maxSize: "m",
+  scope: "",
+  podPath: "mind-slides/decks/",
+  url: "/widget/decks",
+  trust: "first-party",
+};
+// The Wallet's read-only tile (PRD-WALLET §3): renders ONLY the non-authoritative
+// snapshot the in-process Wallet app writes to `apps/wallet/snapshot.json` — the
+// bridge brokers pod I/O only, so the live `/.tokens` ledger is never reachable
+// (or needed) from a tile. No bridge widening.
+const WALLET_BALANCE_WIDGET: WidgetDecl = {
+  id: "balance",
+  label: "Balance",
+  icon: "💰",
+  size: "s",
+  maxSize: "m",
+  scope: "",
+  url: "/widget/wallet-balance",
+  trust: "first-party",
+};
+// Vault is zero-knowledge: this tile reads ONLY the ciphertext file listing under
+// `apps/vault/items/` to show a COUNT — it never reads an item body or any secret.
+const VAULT_GLANCE_WIDGET: WidgetDecl = {
+  id: "glance",
+  label: "Vault",
+  icon: "🔒",
+  size: "m",
+  maxSize: "m",
+  scope: "",
+  url: "/widget/vault-glance",
+  trust: "first-party",
+};
+
 function builtinApps(): HostedApp[] {
   return [
-    { key: "vault", label: "Vault", icon: "🔒", enabled: true },
+    { key: "__home__", label: "Home", icon: "🏠", enabled: true },
+    { key: "vault", label: "Vault", icon: "🔒", enabled: true, widgets: [VAULT_GLANCE_WIDGET] },
     { key: "identity", label: "Identity", icon: "🪪", enabled: true },
+    // The MIND token wallet (PRD-WALLET): in-process + first-party because it
+    // reads the server-origin `/.tokens` ledger with the shell's own session
+    // and signs transfers via the sealed master DID — neither crosses the bridge.
+    { key: "wallet", label: "Wallet", icon: "💰", enabled: true, widgets: [WALLET_BALANCE_WIDGET] },
     {
       key: "drive",
       label: "Drive",
@@ -104,17 +243,72 @@ function builtinApps(): HostedApp[] {
       url: DRIVE_URL,
       embed: "iframe",
       trust: "first-party",
+      widgets: [RECENT_WIDGET],
+    },
+    {
+      key: "notes",
+      label: "Notes",
+      icon: "📝",
+      enabled: true,
+      url: NOTES_URL,
+      embed: "iframe",
+      trust: "first-party",
+      // The interactive tile on default Home: write + read in the notes zone. Drive
+      // keeps the read-only Recent tile, so Home shows two DISTINCT widgets, each
+      // ceilinged to its OWN app zone (per-app scope isolation).
+      widgets: [QUICK_NOTE_WIDGET],
+    },
+    {
+      key: "contacts",
+      label: "Contacts",
+      icon: "👥",
+      enabled: true,
+      url: CONTACTS_URL,
+      embed: "iframe",
+      trust: "first-party",
+      widgets: [PEOPLE_WIDGET],
+    },
+    {
+      key: "calendar",
+      label: "Calendar",
+      icon: "📅",
+      enabled: true,
+      url: CALENDAR_URL,
+      embed: "iframe",
+      trust: "first-party",
+      widgets: [UP_NEXT_WIDGET],
+    },
+    {
+      key: "photos",
+      label: "Photos",
+      icon: "🖼️",
+      enabled: true,
+      url: PHOTOS_URL,
+      embed: "iframe",
+      trust: "first-party",
+      widgets: [GALLERY_WIDGET],
+    },
+    {
+      key: "slides",
+      label: "Slides",
+      icon: "🖥️",
+      enabled: true,
+      url: SLIDES_URL,
+      embed: "iframe",
+      trust: "first-party",
+      widgets: [DECKS_WIDGET],
     },
   ];
 }
 
 /**
- * The app to open on first load. Drive is the everyday surface and now a
- * built-in (always present), so it opens by default in every workspace. Falls
- * back to Vault only if the default key is overridden to something absent.
- * Configurable per deploy via `NEXT_PUBLIC_SHELL_DEFAULT_APP`.
+ * The app to open on first load. Home is the workspace's default landing surface
+ * (PRD-DASHBOARD §9) and a built-in (always present), so it opens by default in
+ * every workspace; Drive et al. stay one click away. Falls back to Vault only if
+ * the default key is overridden to something absent. Configurable per deploy via
+ * `NEXT_PUBLIC_SHELL_DEFAULT_APP` (e.g. set it to `drive` to keep the old default).
  */
-const DEFAULT_APP_KEY = process.env.NEXT_PUBLIC_SHELL_DEFAULT_APP ?? "drive";
+const DEFAULT_APP_KEY = process.env.NEXT_PUBLIC_SHELL_DEFAULT_APP ?? "__home__";
 const FALLBACK_APP_KEY = "vault";
 
 export function ShellProvider({ children }: { children: React.ReactNode }) {
@@ -127,7 +321,9 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
   const [project, setProjectState] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [apps, setApps] = useState<HostedApp[]>(builtinApps());
-  const [activeAppKey, setActiveAppKey] = useState<string>(FALLBACK_APP_KEY);
+  // Land on the default surface (Home) immediately, so the first paint isn't a
+  // flash of the Vault fallback before the catalog load applies the default.
+  const [activeAppKey, setActiveAppKey] = useState<string>(DEFAULT_APP_KEY);
   const [ready, setReady] = useState(false);
   const overridePod = useRef<string | null>(null);
   // The default app is applied exactly once, on the first catalog load — never
@@ -263,7 +459,10 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
     // overridden to something absent — then we stay on the Vault fallback.
     if (!defaultApplied.current) {
       defaultApplied.current = true;
-      if (merged.some((a) => a.key === DEFAULT_APP_KEY)) setActiveAppKey(DEFAULT_APP_KEY);
+      const target = merged.some((a) => a.key === DEFAULT_APP_KEY)
+        ? DEFAULT_APP_KEY
+        : FALLBACK_APP_KEY;
+      if (merged.some((a) => a.key === target)) setActiveAppKey(target);
     }
   }, [authedFetch]);
 

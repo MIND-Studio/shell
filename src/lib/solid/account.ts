@@ -51,6 +51,26 @@ async function json<T>(res: Response): Promise<T> {
 }
 
 /**
+ * True iff the server exposes the CSS account-creation API (an unauthenticated
+ * `.account/` index advertising `controls.account.create`). A DID-only server
+ * (e.g. solid-server-rs) has no account plane at all — its one pod is created
+ * at DID sign-in — so workspace provisioning can't work there. Never throws;
+ * unreachable/odd servers resolve `false`.
+ */
+export async function serverSupportsAccountCreation(server?: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${serverRoot(server)}.account/`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return false;
+    const idx = (await res.json()) as { controls?: { account?: { create?: string } } };
+    return Boolean(idx.controls?.account?.create);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Create a pod on a CSS server via the account-session handshake.
  *
  * Two modes, one handshake (PRD-DID §5.7):
@@ -374,8 +394,10 @@ export async function provisionWorkspaceAccount(opts: {
     throw new Error("Can't reach the account server — is it online?");
   }
   if (!createRes.ok) {
+    // 401 too: a server with no account API (e.g. a DID-only server) falls
+    // through to its storage layer, which answers 401 — not "bad credentials".
     throw new Error(
-      createRes.status === 403 || createRes.status === 404
+      createRes.status === 401 || createRes.status === 403 || createRes.status === 404
         ? "This server doesn't allow creating new accounts."
         : `Account creation failed (${createRes.status}).`
     );

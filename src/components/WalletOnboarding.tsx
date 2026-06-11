@@ -30,7 +30,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label } from "@mind-studio/ui";
-import { DEFAULT_ISSUER } from "@/lib/solid/session";
+import { rememberIssuer, storedIssuer } from "@/lib/solid/session";
 import {
   getView,
   getDid,
@@ -38,9 +38,13 @@ import {
   createWallet,
   unlockWallet,
   addPassport,
+  newPassportId,
+  sign as walletSign,
 } from "@/lib/identity/wallet";
 import { provisionPassport } from "@/lib/identity/provision";
-import { enterPassport } from "@/lib/identity/passport-login";
+import { writeProfileName } from "@/lib/solid/profile";
+import { enterPassport, loginWithDidSession } from "@/lib/identity/passport-login";
+import { serverSupportsDid } from "@/lib/solid/did-account";
 import { LAST_ACTIVE_PASSPORT_KEY, type Passport } from "@/lib/identity/types";
 
 type WalletStatus = "unknown" | "none" | "locked" | "unlocked";
@@ -61,7 +65,9 @@ export default function WalletOnboarding() {
   const [pw, setPw] = useState("");
   const [confirm, setConfirm] = useState("");
   const [label, setLabel] = useState("");
-  const [server, setServer] = useState(DEFAULT_ISSUER);
+  // Lazy init: the last server actually signed into (same as PasswordLoginCard),
+  // so a localhost/self-hosted user's new identity isn't provisioned on prod.
+  const [server, setServer] = useState(() => storedIssuer());
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [busy, setBusy] = useState<"" | "create" | "unlock">("");
   const [error, setError] = useState<string | null>(null);
@@ -76,17 +82,75 @@ export default function WalletOnboarding() {
     setBusy("create");
     try {
       const s = getView().status;
-      if (s === "none") await createWallet(pw);
-      else if (s === "locked") await unlockWallet(pw);
+      if (s === "none") {
+        await createWallet(pw);
+      } else if (s === "locked") {
+        // A wallet already lives on this device; a wrong password here would
+        // otherwise surface as a baffling generic "could not create" dead end.
+        try {
+          await unlockWallet(pw);
+        } catch {
+          setError(
+            "This device already holds an identity wallet, and that master password doesn't match it. Unlock your existing identity instead, or sign in with a different account below."
+          );
+          setBusy("");
+          return;
+        }
+      }
       const did = getDid();
       if (!did) throw new Error("Could not initialize your identity.");
 
+      const name = label.trim() || "Personal";
       let passport = getPassports()[0];
-      if (!passport) {
-        passport = await provisionPassport({ did, server, label: label.trim() || "Personal" });
+      let provisioned = false;
+      if (passport) {
+        // Returning wallet on this device — resume its existing identity.
+        await enterPassport(passport);
+      } else if (await serverSupportsDid(server)) {
+        // Server-side DID login (e.g. solid-server-rs): prove control of the
+        // master DID by signing a challenge — the server auto-provisions the pod
+        // on first login. No CSS account API, no stored password, no redirect.
+        const origin = server.replace(/\/$/, "");
+        const passportId = newPassportId();
+        const { webId, podRoot } = await loginWithDidSession({
+          passportId,
+          server: origin,
+          did,
+          sign: walletSign,
+          label: name,
+        });
+        passport = {
+          id: passportId,
+          did,
+          server: origin,
+          webId,
+          podRoots: [podRoot],
+          label: name,
+          createdAt: new Date().toISOString(),
+          didLinked: true,
+          creds: { kind: "did" },
+        };
+        await addPassport(passport); // session already active + pod seeded
+        provisioned = true;
+      } else {
+        // Stock CSS — provision a fresh-WebID passport via the account API, then
+        // sign in headlessly with the minted client-credentials.
+        passport = await provisionPassport({ did, server, label: name });
         await addPassport(passport);
+        await enterPassport(passport);
+        provisioned = true;
       }
-      await enterPassport(passport); // headless sign-in + initialize the new pod
+      // Greet the user by the name they typed: stamp it on the fresh profile so
+      // the rail and account switcher don't show the server's auto-generated
+      // placeholder. Best-effort — onboarding must not fail on a cosmetic write.
+      if (provisioned && label.trim()) {
+        try {
+          await writeProfileName(passport.webId, label.trim());
+        } catch {}
+      }
+      // Persist the issuer the passport actually lives on so every storedIssuer()
+      // consumer (workspace provisioning, DID probe, next sign-in) targets it.
+      rememberIssuer(passport.server.endsWith("/") ? passport.server : passport.server + "/");
       router.replace("/shell"); // SPA nav keeps the in-memory passport session
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not create your identity.");
@@ -102,15 +166,19 @@ export default function WalletOnboarding() {
       await unlockWallet(pw); // throws on a wrong password (core AEAD tag check)
       const passports = getPassports();
       // Resume the SAME identity the user last used (background-resume pointer),
-      // falling back to any client-credentials passport, then the first one.
+      // falling back to any headlessly-resumable passport, then the first one. A
+      // passport resumes with no input when the unlocked wallet can re-establish
+      // its session: client-credentials (re-mint a token) or DID (re-sign a
+      // challenge — solid-server-rs). Manual/password logins can't.
       const lastId =
         typeof window !== "undefined"
           ? localStorage.getItem(LAST_ACTIVE_PASSPORT_KEY)
           : null;
-      const isCc = (p: Passport) => p.creds?.kind === "client-credentials";
+      const canResume = (p: Passport) =>
+        p.creds?.kind === "client-credentials" || p.creds?.kind === "did";
       const resumable =
-        (lastId && passports.find((p) => p.id === lastId && isCc(p))) ||
-        passports.find(isCc) ||
+        (lastId && passports.find((p) => p.id === lastId && canResume(p))) ||
+        passports.find(canResume) ||
         passports[0];
       if (!resumable) {
         // Unlocked, but no pod yet — let them provision their first.
@@ -118,7 +186,7 @@ export default function WalletOnboarding() {
         setBusy("");
         return;
       }
-      if (resumable.creds?.kind !== "client-credentials") {
+      if (!canResume(resumable)) {
         setError('This pod needs a manual sign-in — use "Continue with Mind" below.');
         setBusy("");
         return;
@@ -144,18 +212,24 @@ export default function WalletOnboarding() {
           Your master key lives on this device. Enter your master password to
           continue into your pod — no server password needed.
         </p>
-        <div className="mt-4 space-y-3">
+        {/* A real <form> so Enter submits and password managers can fill. */}
+        <form
+          className="mt-4 space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void unlockAndContinue();
+          }}
+        >
           <Field
             id="ob-unlock-pw"
             label="Master password"
             type="password"
             value={pw}
             onChange={setPw}
-            onEnter={() => void unlockAndContinue()}
             autoComplete="current-password"
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button onClick={() => void unlockAndContinue()} disabled={busy !== ""} className="w-full">
+          <Button type="submit" disabled={busy !== ""} className="w-full">
             {busy === "unlock" ? "Unlocking…" : "Unlock & continue"}
           </Button>
           <button
@@ -166,9 +240,9 @@ export default function WalletOnboarding() {
             }}
             className="w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
           >
-            Create a different identity instead
+            Finish setting up your identity instead
           </button>
-        </div>
+        </form>
       </Card>
     );
   }
@@ -181,13 +255,21 @@ export default function WalletOnboarding() {
         We generate your keys on this device and create your first pod — with a
         strong password the shell stores for you (you never type or see one).
       </p>
-      <div className="mt-4 space-y-3">
+      {/* A real <form> so Enter submits and password managers can fill. */}
+      <form
+        className="mt-4 space-y-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void createIdentity();
+        }}
+      >
         <Field
           id="ob-label"
           label="Name this identity"
           value={label}
           onChange={setLabel}
           placeholder="Personal"
+          autoComplete="off"
         />
         <Field
           id="ob-pw"
@@ -203,7 +285,6 @@ export default function WalletOnboarding() {
           type="password"
           value={confirm}
           onChange={setConfirm}
-          onEnter={() => void createIdentity()}
           autoComplete="new-password"
         />
 
@@ -220,8 +301,15 @@ export default function WalletOnboarding() {
           </div>
         )}
 
+        {status === "locked" && (
+          <p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-[11px] leading-snug text-amber-700 dark:text-amber-200">
+            This device already holds an identity wallet (one per device for
+            now). Your master password must match it — this form finishes its
+            setup or resumes it, rather than starting over.
+          </p>
+        )}
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Button onClick={() => void createIdentity()} disabled={busy !== ""} className="w-full">
+        <Button type="submit" disabled={busy !== ""} className="w-full">
           {busy === "create" ? "Creating your identity & pod…" : "Create my identity"}
         </Button>
         <p className="rounded-md bg-muted/50 p-2 text-[11px] leading-snug text-muted-foreground">
@@ -241,7 +329,7 @@ export default function WalletOnboarding() {
             ← Unlock my existing identity instead
           </button>
         )}
-      </div>
+      </form>
     </Card>
   );
 }
@@ -268,7 +356,6 @@ function Field({
   type = "text",
   autoComplete,
   placeholder,
-  onEnter,
 }: {
   id: string;
   label: string;
@@ -277,7 +364,6 @@ function Field({
   type?: string;
   autoComplete?: string;
   placeholder?: string;
-  onEnter?: () => void;
 }) {
   return (
     <div className="space-y-1.5">
@@ -289,9 +375,6 @@ function Field({
         autoComplete={autoComplete}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && onEnter) onEnter();
-        }}
       />
     </div>
   );

@@ -34,6 +34,9 @@ import {
   setActivePassportSession,
   clearActivePassportSession,
 } from "@/lib/solid/passport-session";
+import { loginWithDid } from "@/lib/solid/did-account";
+import { podRootFromWebId } from "@/lib/solid/account-login";
+import { sign as walletSign, getDid } from "./wallet";
 import type { Passport } from "./types";
 
 function ensureSlash(u: string): string {
@@ -154,6 +157,102 @@ export async function loginWithClientCredentials(opts: {
 }
 
 /**
+ * A self-refreshing authenticated fetch for a **DID-session** passport
+ * (`solid-server-rs`). Unlike client-credentials there is no stored secret: the
+ * token is re-obtained by signing a fresh server challenge with the wallet's
+ * master `did:key` (HARD rule #4 — signing is delegated to the audited core).
+ * The returned `DID-Session` bearer is sent verbatim as `Authorization`; on a
+ * 401 (token aged out) we re-login and retry once. No DPoP: this server issues a
+ * plain bearer (verified against its reference client).
+ */
+async function makeDidSessionFetch(
+  server: string,
+  did: string,
+  sign: (payload: string) => Promise<string>,
+  initialToken: string
+): Promise<typeof fetch> {
+  let token = initialToken;
+
+  const withAuth = (input: RequestInfo | URL, init?: RequestInit) => {
+    const headers = new Headers(init?.headers ?? {});
+    headers.set("authorization", token);
+    return fetch(input, { ...init, headers });
+  };
+
+  return (async (input: RequestInfo | URL, init?: RequestInit) => {
+    let res = await withAuth(input, init);
+    if (res.status === 401) {
+      token = (await loginWithDid({ did, sign, server })).token;
+      res = await withAuth(input, init);
+    }
+    return res;
+  }) as typeof fetch;
+}
+
+/**
+ * Sign in via **server-side DID login** and make it the shell's active identity
+ * (`solid-server-rs` and any server exposing the DID challenge/login protocol).
+ * Proves control of the wallet's master DID by signing a server challenge — no
+ * password, no redirect, no client-credentials — and on first login the server
+ * auto-provisions the pod. Returns the authenticated WebID + pod root so the
+ * caller can seal a resumable `did`-kind passport.
+ */
+export async function loginWithDidSession(opts: {
+  passportId: string;
+  server: string;
+  did: string;
+  sign: (payload: string) => Promise<string>;
+  label?: string;
+}): Promise<{ webId: string; podRoot: string }> {
+  const platform = await getPlatform();
+  if (platform.kind !== "web") {
+    throw new Error("DID sign-in is available on the web build for now.");
+  }
+  const { token, webId } = await loginWithDid({
+    did: opts.did,
+    sign: opts.sign,
+    server: opts.server,
+  });
+  if (!webId) {
+    throw new Error("This server's DID login returned no WebID to act as.");
+  }
+  const podRoot = podRootFromWebId(webId);
+  const fetchFn = await makeDidSessionFetch(opts.server, opts.did, opts.sign, token);
+  setActivePassportSession({
+    passportId: opts.passportId,
+    webId,
+    podRoot,
+    label: opts.label,
+    fetch: fetchFn,
+  });
+  // The server auto-provisions the pod on first DID login; seed the app catalog
+  // so the first /shell render is clean (mirrors enterPassport). Best-effort.
+  try {
+    await ensureSeeded(podRoot, platform.pod.fetch);
+  } catch {
+    /* non-fatal — the launcher self-seeds on first open */
+  }
+  return { webId, podRoot };
+}
+
+/**
+ * Re-establish a stored `did`-kind passport's session (background resume / switch)
+ * by re-running DID login with the unlocked wallet. The master seed never leaves
+ * the core — only a signature crosses the FFI.
+ */
+async function enterDidPassport(passport: Passport): Promise<void> {
+  const did = getDid();
+  if (!did) throw new Error("Unlock your wallet to resume this DID identity.");
+  await loginWithDidSession({
+    passportId: passport.id,
+    server: passport.server,
+    did,
+    sign: walletSign,
+    label: passport.label,
+  });
+}
+
+/**
  * Sign in headlessly AS `passport` and make it the shell's active identity.
  * Requires the passport to carry client-credentials (provisioned passports do;
  * manually-captured ones don't — they still use a normal /connect sign-in).
@@ -186,7 +285,11 @@ export async function loginAsPassport(passport: Passport): Promise<void> {
  * Identity app's "Switch to this passport", and the account switcher).
  */
 export async function enterPassport(passport: Passport): Promise<void> {
-  await loginAsPassport(passport);
+  if (passport.creds?.kind === "did") {
+    await enterDidPassport(passport);
+  } else {
+    await loginAsPassport(passport);
+  }
   try {
     const platform = await getPlatform();
     await ensureSeeded(passport.podRoots[0], platform.pod.fetch);

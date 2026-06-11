@@ -205,7 +205,8 @@ function SetupScreen({ onCreate }: { onCreate: (pw: string) => Promise<void> }) 
           <h2 className="mt-3 text-xl font-semibold">Create your vault</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Your master password never leaves this device — it unlocks an encryption key that only
-            you hold. There is no recovery if you forget it.
+            you hold. There is no recovery if you forget it. It&rsquo;s the vault&rsquo;s own
+            password, separate from the one that unlocks your identity.
           </p>
         </div>
         <div className="space-y-1.5">
@@ -220,7 +221,7 @@ function SetupScreen({ onCreate }: { onCreate: (pw: string) => Promise<void> }) 
             type="password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submit()}
+            onKeyDown={(e) => e.key === "Enter" && !busy && submit()}
           />
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -259,6 +260,10 @@ function UnlockScreen({ onUnlock }: { onUnlock: (pw: string) => Promise<void> })
         <div className="text-center">
           <div className="text-4xl">🔒</div>
           <h2 className="mt-3 text-xl font-semibold">Unlock your vault</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The vault has its own master password — set when it was created, separate from the
+            one that unlocks your identity on this device.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="ul-pw">Master password</Label>
@@ -268,7 +273,7 @@ function UnlockScreen({ onUnlock }: { onUnlock: (pw: string) => Promise<void> })
             autoFocus
             value={pw}
             onChange={(e) => setPw(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submit()}
+            onKeyDown={(e) => e.key === "Enter" && !busy && pw && submit()}
           />
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}

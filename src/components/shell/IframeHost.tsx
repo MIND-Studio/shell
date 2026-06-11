@@ -20,7 +20,29 @@ import type { HostedApp } from "@/lib/shell/types";
  * the child re-posts `mind:hello` until it gets `mind:welcome`, so the handshake
  * is race-free regardless of ordering.
  */
-export function IframeHost({ app }: { app: HostedApp }) {
+/**
+ * @param scope    Optional pod-scope ceiling handed to the bridge as the app's
+ *                 `workspacePod`. Widgets pass their owning app's `appZone()` so
+ *                 the bridge's `isWithinPod` narrows them to that zone (anything
+ *                 outside → `mind:denied`). Absent ⇒ the whole workspace pod.
+ * @param onResize Optional v2 self-sizing callback (host-clamped px height).
+ * @param allowWrite Whether the host honors `mind:write` from this frame. Plain
+ *                 apps omit it (⇒ full `pod:workspace-rw`); read-first widgets pass
+ *                 `false` unless they declared `write:true`.
+ */
+export function IframeHost({
+  app,
+  scope,
+  onResize,
+  onOpen,
+  allowWrite,
+}: {
+  app: HostedApp;
+  scope?: string;
+  onResize?: (height: number) => void;
+  onOpen?: (path?: string) => void;
+  allowWrite?: boolean;
+}) {
   const { webId, workspacePod, project, fetch: podFetch } = useShell();
   const { resolvedMode } = useMindTheme();
   const theme: BridgeTheme = resolvedMode === "light" ? "light" : "dark";
@@ -65,9 +87,15 @@ export function IframeHost({ app }: { app: HostedApp }) {
       app,
       identity: {
         webId,
-        workspacePod,
+        // Widgets get a NARROWED ceiling (their app zone); plain apps get the
+        // whole workspace pod. Either way the bridge scope-checks against this.
+        workspacePod: scope ?? workspacePod,
         project: project ? { id: project.id, name: project.name } : null,
       },
+      // The TRUE pod root (un-narrowed) is the container-creation floor for writes;
+      // the scope check above still uses the narrowed `workspacePod` ceiling.
+      podRoot: workspacePod,
+      allowWrite,
       theme: themeRef.current,
       fetch: podFetch,
       onReady: () => setPhase("ready"),
@@ -75,13 +103,15 @@ export function IframeHost({ app }: { app: HostedApp }) {
         setErrorMsg(message);
         setPhase("error");
       },
+      onResize,
+      onOpen,
     });
     bridgeRef.current = bridge;
     return () => {
       bridge.dispose();
       bridgeRef.current = null;
     };
-  }, [app, app.url, app.trust, webId, workspacePod, project, podFetch]);
+  }, [app, app.url, app.trust, webId, workspacePod, scope, allowWrite, project, podFetch, onResize, onOpen]);
 
   // Push shell theme changes to the live bridge so the embedded app's chrome
   // tracks the shell without re-mounting the iframe.

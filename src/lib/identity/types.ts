@@ -39,9 +39,13 @@ export interface MasterIdentity {
  *     never types or sees it; the shell keeps it here so the workspace's account
  *     is recoverable. Sealed inside the registry blob only — never on a pod, never
  *     logged (AGENTS.md rule #5).
+ *   - `did`: NO stored secret at all. The passport re-authenticates by signing a
+ *     server challenge with the wallet's master `did:key` (server-side DID login,
+ *     e.g. `solid-server-rs`, where first login also auto-provisions the pod).
+ *     Silently resumable because the unlocked wallet can always re-sign.
  */
 export interface PassportCreds {
-  kind: "client-credentials" | "password" | "none";
+  kind: "client-credentials" | "password" | "none" | "did";
   id?: string;
   secret?: string;
   /** `password` kind only: the auto-generated CSS account login. */

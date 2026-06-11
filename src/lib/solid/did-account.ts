@@ -60,6 +60,27 @@ async function readControls(accountIndex: string, headers: Record<string, string
 }
 
 /**
+ * Read DID controls, tolerating both server shapes:
+ *  - CSS DID-fork: advertised on the (authed) account index `{root}.account/`
+ *    as `controls.did.{challenge,login,link}`.
+ *  - solid-server-rs: a dedicated, unauthenticated discovery doc at
+ *    `{root}.account/did/` with the SAME `{controls:{did:{challenge,login}}}`
+ *    shape (no `link` — DID login auto-provisions the pod on first use).
+ *
+ * We try the dedicated doc first (cheap, unauthenticated, no 401 noise on
+ * solid-server-rs) and fall back to the account index for the CSS fork.
+ */
+async function readDidControls(root: string, headers: Record<string, string>): Promise<DidControls> {
+  try {
+    const did = await readControls(`${root}.account/did/`, headers);
+    if (did.challenge && did.login) return did;
+  } catch {
+    /* fall through to the CSS-fork account index */
+  }
+  return readControls(`${root}.account/`, headers);
+}
+
+/**
  * Probe whether a server is DID-aware (advertises `controls.did.challenge` +
  * `.login`). Used by the UI to show the DID-login affordance only where it can
  * actually work — instead of letting the user click into a dead end on stock
@@ -67,16 +88,33 @@ async function readControls(accountIndex: string, headers: Record<string, string
  */
 export async function serverSupportsDid(server?: string): Promise<boolean> {
   try {
-    const did = await readControls(`${serverRoot(server)}.account/`, {});
+    const did = await readDidControls(serverRoot(server), {});
     return Boolean(did.challenge && did.login);
   } catch {
     return false;
   }
 }
 
+/** The result of a successful DID login. */
+export interface DidLoginResult {
+  /**
+   * The authorization token to present on subsequent requests, **including its
+   * scheme prefix**. On the CSS DID-fork this is a `CSS-Account-Token …` (used
+   * against the account API); on `solid-server-rs` it's a `DID-Session …`
+   * bearer usable directly for LDP. Send it verbatim as `Authorization`.
+   */
+  token: string;
+  /**
+   * The WebID the server authenticated us as. The CSS fork omits it (the caller
+   * already knows the account's WebID); `solid-server-rs` returns it (and has
+   * auto-provisioned that WebID's pod on first login).
+   */
+  webId?: string;
+}
+
 /**
- * Log in to a CSS account by proving control of a linked DID. Returns the
- * `CSS-Account-Token` (use it as `Authorization: CSS-Account-Token <token>`).
+ * Log in by proving control of a DID. Returns the authorization token (with its
+ * scheme prefix) and, when the server supplies it, the authenticated WebID.
  *
  * @throws if the server is not DID-aware, the DID is not linked, or the proof
  * is rejected.
@@ -86,9 +124,8 @@ export async function loginWithDid(opts: {
   sign: DidSigner;
   /** Target server origin; defaults to the stored issuer. */
   server?: string;
-}): Promise<string> {
-  const accountIndex = `${serverRoot(opts.server)}.account/`;
-  const did = await readControls(accountIndex, {});
+}): Promise<DidLoginResult> {
+  const did = await readDidControls(serverRoot(opts.server), {});
   if (!did.challenge || !did.login) {
     throw new Error("This server doesn't support DID login.");
   }
@@ -116,9 +153,13 @@ export async function loginWithDid(opts: {
     throw new Error("This DID is not linked to an account on this server, or the proof was rejected.");
   }
   if (!finishRes.ok) throw new Error(`DID login failed (${finishRes.status}).`);
-  const { authorization } = (await finishRes.json()) as { authorization?: string };
+  const { authorization, webid, webId } = (await finishRes.json()) as {
+    authorization?: string;
+    webid?: string;
+    webId?: string;
+  };
   if (!authorization) throw new Error("DID login returned no token.");
-  return authorization;
+  return { token: authorization, webId: webid ?? webId };
 }
 
 /**

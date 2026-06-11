@@ -58,6 +58,61 @@ export type AppEmbed = "iframe" | "inprocess" | "link";
 /** Trust tier driving iframe sandbox + (later) consent posture (PRD-APPS §5.5). */
 export type AppTrust = "first-party" | "community" | "untrusted";
 
+/** Home-widget grid footprint (PRD-DASHBOARD §5): s=1×1, m=2×1, l=2×2. */
+export type WidgetSize = "s" | "m" | "l";
+
+/**
+ * A widget an app offers to the Home surface (PRD-DASHBOARD §5/§8). It is served
+ * from the app's OWN origin and hosted in a sandboxed tile under the capability
+ * bridge — never shell-local code. Its pod scope ceiling is the owning app's
+ * {@link appZone} narrowed by `scope`; the bridge denies anything outside it.
+ */
+export interface WidgetDecl {
+  /** Stable id, unique within the owning app (the `#frag` of a Home ref). */
+  id: string;
+  label: string;
+  /** Single emoji for the tile header. */
+  icon: string;
+  /** Default grid footprint. */
+  size: WidgetSize;
+  /** Largest footprint the host grants on self-resize (defaults to `size`). */
+  maxSize?: WidgetSize;
+  /**
+   * Sub-path UNDER the owning app's `appZone()` the widget may read — the scope
+   * ceiling. "" = the app zone root. The bridge enforces it via `isWithinPod`.
+   */
+  scope: string;
+  /**
+   * Absolute container path under the workspace pod ROOT that REPLACES the default
+   * `appZone()` ceiling (still narrowed by `scope`, still confined to the pod and
+   * scope-checked). For widgets surfacing an app whose on-pod data doesn't live in
+   * the canonical `apps/{key}/` zone — e.g. Drive stores files at `mind-drive/files/`,
+   * not `apps/drive/`. Absent ⇒ the canonical app zone. No leading slash.
+   */
+  podPath?: string;
+  /** The widget's own page, loaded in the tile iframe (absolute or shell-relative). */
+  url: string;
+  /** Tile sandbox tier; absent ⇒ "community" (opaque-origin isolation). */
+  trust?: AppTrust;
+  /**
+   * Opt-in WRITE capability (PRD "read-first" posture). Absent/false ⇒ the widget
+   * is read-only and the host denies its `mind:write` with `mind:denied`. true ⇒
+   * the host brokers scope-checked writes inside the widget's `appZone()` ceiling.
+   */
+  write?: boolean;
+}
+
+/**
+ * One placed tile in a workspace's Home layout, persisted in `apps/shell/home.ttl`
+ * (PRD-DASHBOARD §8b). `ref` is `"appKey#widgetId"`, resolved against the live
+ * app list + each app's `widgets`.
+ */
+export interface HomeLayoutItem {
+  ref: string;
+  order: number;
+  size: WidgetSize;
+}
+
 export interface HostedApp {
   /** Stable slug, also the `/apps/{key}/` zone segment. */
   key: string;
@@ -72,6 +127,8 @@ export interface HostedApp {
   embed?: AppEmbed;
   /** Trust tier; absent ⇒ "community" (PRD-APPS §5.5). */
   trust?: AppTrust;
+  /** Home widgets this app offers (PRD-DASHBOARD §5); absent ⇒ none. */
+  widgets?: WidgetDecl[];
 }
 
 export interface AccountIdentity {

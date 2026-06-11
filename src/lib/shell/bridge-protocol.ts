@@ -16,7 +16,7 @@
  * from a server component, a worker, or a plain page.
  */
 
-export const PROTOCOL_VERSION = 1 as const;
+export const PROTOCOL_VERSION = 2 as const;
 
 /** Capability tokens the parent advertises in the welcome (coarse for v0). */
 export type Capability = "pod:workspace-rw";
@@ -95,6 +95,34 @@ export interface WriteMsg {
   contentType?: string;
 }
 
+/**
+ * Self-sizing (v2): a widget child asks the host to fit its tile to content.
+ * The host CLAMPS the value to the tile's grid bounds before applying it — a
+ * hostile child can't grow its tile unbounded. A v1 child never sends this and
+ * simply keeps its declared size (graceful degradation).
+ */
+export interface ResizeMsg {
+  t: "mind:resize";
+  v: typeof PROTOCOL_VERSION;
+  /** Desired content height in CSS pixels (host-clamped). */
+  height: number;
+}
+
+/**
+ * Navigation hint (child → parent, fire-and-forget): a widget asks the host to
+ * open its OWNING app — e.g. a Home tile item was clicked. `path` is an optional,
+ * UNTRUSTED hint at which resource to open; the host may ignore it. No reply, no
+ * pod access, no credential crosses — the host alone decides whether/where to
+ * navigate, and it only ever opens the widget's own owning app (the child cannot
+ * name a different one). A v1 child never sends this (graceful degradation).
+ */
+export interface OpenMsg {
+  t: "mind:open";
+  v: typeof PROTOCOL_VERSION;
+  /** Optional resource hint (e.g. a pod URL or entry name). */
+  path?: string;
+}
+
 /** Lifecycle: the app has rendered and is interactive. */
 export interface ReadyMsg {
   t: "mind:ready";
@@ -114,6 +142,8 @@ export type ChildMessage =
   | ReaddirMsg
   | ReadMsg
   | WriteMsg
+  | ResizeMsg
+  | OpenMsg
   | ReadyMsg
   | AppErrorMsg;
 
@@ -191,13 +221,25 @@ export type ParentMessage =
 
 // ── Guards ────────────────────────────────────────────────────────────────
 
-/** True if `data` is a versioned bridge message with a `mind:`-namespaced tag. */
+/**
+ * True if `data` is a versioned bridge message with a `mind:`-namespaced tag.
+ *
+ * The version check accepts ANY protocol the host still understands
+ * (`1 ≤ v ≤ PROTOCOL_VERSION`), not just an exact match — so a child speaking an
+ * older protocol degrades gracefully (e.g. a v1 child against this v2 host keeps
+ * its declared size by never sending `mind:resize`) instead of having every one
+ * of its messages silently dropped. The host only ever emits the current verbs;
+ * a child that doesn't recognize a newer one ignores it.
+ */
 export function isBridgeMessage(data: unknown): data is { t: string; v: number } {
+  if (typeof data !== "object" || data === null) return false;
+  const t = (data as { t?: unknown }).t;
+  const v = (data as { v?: unknown }).v;
   return (
-    typeof data === "object" &&
-    data !== null &&
-    typeof (data as { t?: unknown }).t === "string" &&
-    (data as { t: string }).t.startsWith("mind:") &&
-    (data as { v?: unknown }).v === PROTOCOL_VERSION
+    typeof t === "string" &&
+    t.startsWith("mind:") &&
+    typeof v === "number" &&
+    v >= 1 &&
+    v <= PROTOCOL_VERSION
   );
 }

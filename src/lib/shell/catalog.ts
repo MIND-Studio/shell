@@ -8,7 +8,8 @@ import {
   getUrl,
 } from "@inrupt/solid-client";
 import { resourceExistsByListing } from "@/lib/solid/pod-fs";
-import type { HostedApp, AppEmbed, AppTrust } from "./types";
+import type { HostedApp, AppEmbed, AppTrust, WidgetDecl, WidgetSize } from "./types";
+import type { SolidDataset } from "@inrupt/solid-client";
 
 /**
  * Read the pod-owned app catalog at `{podRoot}home/apps.ttl` (PRD-APPS §4) into
@@ -32,6 +33,16 @@ const MIND_ICON = `${VOC}icon`;
 const MIND_ORDER = `${VOC}order`;
 const MIND_EMBED = `${VOC}embed`;
 const MIND_TRUST = `${VOC}trust`;
+// Widget predicates (PRD-DASHBOARD §8). A widget is its own `mind:Widget` thing
+// linked back to its app by `mind:app "<appKey>"` — solid-client's named-node API
+// reads this cleanly (vs. the spec's blank-node sugar), and the seed writer in
+// `@mind-studio/core` is the only producer, so the shape is ours to settle on.
+const MIND_WIDGET = `${VOC}Widget`;
+const MIND_APP_REF = `${VOC}app`;
+const MIND_ID = `${VOC}id`;
+const MIND_SIZE = `${VOC}size`;
+const MIND_MAXSIZE = `${VOC}maxSize`;
+const MIND_SCOPE = `${VOC}scope`;
 
 function ensureSlash(u: string): string {
   return u.endsWith("/") ? u : u + "/";
@@ -45,6 +56,42 @@ function asTrust(v: string | null): AppTrust | undefined {
   return v === "first-party" || v === "community" || v === "untrusted"
     ? v
     : undefined;
+}
+
+function asSize(v: string | null): WidgetSize | undefined {
+  return v === "s" || v === "m" || v === "l" ? v : undefined;
+}
+
+/**
+ * Collect every `mind:Widget` thing in the dataset, grouped by its owning app key
+ * (`mind:app`). A widget needs an id + a render URL to be usable; malformed ones
+ * are skipped. Never throws — a bad widget just doesn't appear on Home.
+ */
+function collectWidgets(ds: SolidDataset): Map<string, WidgetDecl[]> {
+  const byApp = new Map<string, WidgetDecl[]>();
+  for (const thing of getThingAll(ds)) {
+    const types = thing.predicates[RDF_TYPE]?.namedNodes ?? [];
+    if (!types.includes(MIND_WIDGET)) continue;
+    const appKey = getStringNoLocale(thing, MIND_APP_REF);
+    const id = getStringNoLocale(thing, MIND_ID);
+    const url =
+      getStringNoLocale(thing, MIND_URL) ?? getUrl(thing, MIND_URL) ?? undefined;
+    if (!appKey || !id || !url) continue;
+    const decl: WidgetDecl = {
+      id,
+      label: getStringNoLocale(thing, MIND_LABEL) ?? id,
+      icon: getStringNoLocale(thing, MIND_ICON) ?? "▦",
+      size: asSize(getStringNoLocale(thing, MIND_SIZE)) ?? "m",
+      maxSize: asSize(getStringNoLocale(thing, MIND_MAXSIZE)),
+      scope: getStringNoLocale(thing, MIND_SCOPE) ?? "",
+      url,
+      trust: asTrust(getStringNoLocale(thing, MIND_TRUST)),
+    };
+    const list = byApp.get(appKey) ?? [];
+    list.push(decl);
+    byApp.set(appKey, list);
+  }
+  return byApp;
 }
 
 /**
@@ -64,6 +111,7 @@ export async function readCatalog(
       fetch: ((url: RequestInfo | URL, init?: RequestInit) =>
         fetchFn(url, { ...init, cache: "no-store" })) as typeof fetch,
     });
+    const widgetsByApp = collectWidgets(ds);
     const rows: { app: HostedApp; order: number }[] = [];
     for (const thing of getThingAll(ds)) {
       const types = thing.predicates[RDF_TYPE]?.namedNodes ?? [];
@@ -83,6 +131,7 @@ export async function readCatalog(
           enabled: true,
           embed: asEmbed(getStringNoLocale(thing, MIND_EMBED)),
           trust: asTrust(getStringNoLocale(thing, MIND_TRUST)),
+          widgets: widgetsByApp.get(key),
         },
         order: getInteger(thing, MIND_ORDER) ?? 0,
       });

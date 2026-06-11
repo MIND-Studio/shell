@@ -5,6 +5,10 @@ import {
   getThing,
   getStringNoLocale,
   getUrl,
+  setStringNoLocale,
+  setThing,
+  saveSolidDatasetAt,
+  createThing,
 } from "@inrupt/solid-client";
 import { getPlatform } from "@/lib/platform";
 import type { AccountIdentity } from "@/lib/shell/types";
@@ -54,6 +58,22 @@ export async function readProfile(webId: string): Promise<AccountIdentity> {
   } catch {
     return { webId, displayName: webIdLabel(webId) };
   }
+}
+
+/**
+ * Set the profile display name (foaf:name) on the WebID document, so the name
+ * the user chose at onboarding is what every surface greets them by — instead
+ * of the server's auto-provisioned placeholder. Saves via PATCH (exact diff),
+ * leaving the rest of the profile (storage link, type triples) untouched.
+ */
+export async function writeProfileName(webId: string, name: string): Promise<void> {
+  const fetchFn = (await getPlatform()).pod.fetch;
+  const docUrl = webId.split("#")[0];
+  const ds = await getSolidDataset(docUrl, { fetch: fetchFn });
+  const me = getThing(ds, webId) ?? createThing({ url: webId });
+  await saveSolidDatasetAt(docUrl, setThing(ds, setStringNoLocale(me, FOAF_NAME, name)), {
+    fetch: fetchFn,
+  });
 }
 
 /**
