@@ -132,9 +132,9 @@ jobs:
             NEXT_PUBLIC_SOLID_ISSUER=https://pods.mindpods.org/
             NEXT_PUBLIC_POD_BASE_URL=https://pods.mindpods.org/
             NEXT_PUBLIC_SHELL_NAMESPACE=mind-shell
-            NEXT_PUBLIC_APP_DOCK_URL=https://dock.mindpods.org
-            NEXT_PUBLIC_APP_DRIVE_URL=https://drive.mindpods.org
-            NEXT_PUBLIC_APP_BUILDER_URL=https://builder.mindpods.org
+            NEXT_PUBLIC_APP_DOCK_URL=https://dock.apps.mindpods.org
+            NEXT_PUBLIC_APP_DRIVE_URL=https://drive.apps.mindpods.org
+            NEXT_PUBLIC_APP_BUILDER_URL=https://builder.apps.mindpods.org
             NEXT_PUBLIC_APP_CODESPACES_URL=https://codespaces.mindpods.org
           secrets: |
             node_auth_token=${{ secrets.GITHUB_TOKEN }}
