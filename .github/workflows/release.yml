@@ -136,6 +136,11 @@ jobs:
             NEXT_PUBLIC_APP_DRIVE_URL=https://drive.apps.mindpods.org
             NEXT_PUBLIC_APP_BUILDER_URL=https://builder.apps.mindpods.org
             NEXT_PUBLIC_APP_CODESPACES_URL=https://codespaces.mindpods.org
+            NEXT_PUBLIC_APP_NOTES_URL=https://notes.apps.mindpods.org
+            NEXT_PUBLIC_APP_CONTACTS_URL=https://contacts.apps.mindpods.org
+            NEXT_PUBLIC_APP_CALENDAR_URL=https://calendar.apps.mindpods.org
+            NEXT_PUBLIC_APP_PHOTOS_URL=https://photos.apps.mindpods.org
+            NEXT_PUBLIC_APP_SLIDES_URL=https://slides.apps.mindpods.org
           secrets: |
             node_auth_token=${{ secrets.GITHUB_TOKEN }}
 

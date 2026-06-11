@@ -84,6 +84,21 @@ ENV NEXT_PUBLIC_APP_DOCK_URL=$NEXT_PUBLIC_APP_DOCK_URL \
     NEXT_PUBLIC_APP_BUILDER_URL=$NEXT_PUBLIC_APP_BUILDER_URL \
     NEXT_PUBLIC_APP_CODESPACES_URL=$NEXT_PUBLIC_APP_CODESPACES_URL
 
+# The pod-suite siblings the shell embeds as Home-dashboard widgets / app tiles
+# (notes/contacts/calendar/photos/slides). UNSET here = they fall back to
+# http://localhost:31xx dev ports, which a deployed https shell blocks as
+# insecure/mixed content — so they MUST be passed at build time in prod.
+ARG NEXT_PUBLIC_APP_NOTES_URL
+ARG NEXT_PUBLIC_APP_CONTACTS_URL
+ARG NEXT_PUBLIC_APP_CALENDAR_URL
+ARG NEXT_PUBLIC_APP_PHOTOS_URL
+ARG NEXT_PUBLIC_APP_SLIDES_URL
+ENV NEXT_PUBLIC_APP_NOTES_URL=$NEXT_PUBLIC_APP_NOTES_URL \
+    NEXT_PUBLIC_APP_CONTACTS_URL=$NEXT_PUBLIC_APP_CONTACTS_URL \
+    NEXT_PUBLIC_APP_CALENDAR_URL=$NEXT_PUBLIC_APP_CALENDAR_URL \
+    NEXT_PUBLIC_APP_PHOTOS_URL=$NEXT_PUBLIC_APP_PHOTOS_URL \
+    NEXT_PUBLIC_APP_SLIDES_URL=$NEXT_PUBLIC_APP_SLIDES_URL
+
 # Build with Turbopack — Next 16's default and the same bundler as `next dev`
 # and the rest of the fleet (dev/prod parity). The native swc binary it needs is
 # guaranteed by the force-install above, so this no longer falls back to Webpack.
