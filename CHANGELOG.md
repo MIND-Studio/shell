@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/MIND-Studio/shell/compare/v0.2.2...v0.3.0) (2026-06-20)
+
+
+### Features
+
+* adopt ui ^0.4.0 fonts + core ^0.7.0 login accent ([e0ae75c](https://github.com/MIND-Studio/shell/commit/e0ae75ce6a736badcfa7b05ee80d15107b6b74ff))
+* **deps:** adopt ui ^0.4.0 / core ^0.6.0, wire fleet webfonts, drop login accent ([2dc396d](https://github.com/MIND-Studio/shell/commit/2dc396d74de9ef75c9a9a38786e6b2dba473db06))
+* home dashboard + widgets, wallet app, shell-bridge/identity expansion ([70c88ce](https://github.com/MIND-Studio/shell/commit/70c88ceadce3616a00df3ada979a0589f8d69308))
+* **shell:** push project switches to embedded apps over the live bridge ([#14](https://github.com/MIND-Studio/shell/issues/14)) ([cad2960](https://github.com/MIND-Studio/shell/commit/cad29600c4607cad565eca2da81e7da4bf8b3af4))
+
+
+### Bug Fixes
+
+* bake sibling-app URLs for notes/contacts/calendar/photos/slides widgets ([42f8492](https://github.com/MIND-Studio/shell/commit/42f84924f6656a549bee62b4f8b6bc23478e68d9))
+
 ## [0.2.2](https://github.com/MIND-Studio/shell/compare/v0.2.1...v0.2.2) (2026-06-07)
 
 
