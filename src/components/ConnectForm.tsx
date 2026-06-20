@@ -17,8 +17,6 @@ import PasswordLoginCard from "@/components/PasswordLoginCard";
 import type { ISessionInfo } from "@inrupt/solid-client-authn-browser";
 
 const APP_NAME = "Shell";
-// Indigo accent — distinguishes the shell from its teal siblings (PRD §7).
-const SHELL_ACCENT = "#6366f1";
 
 export default function ConnectForm() {
   const router = useRouter();
@@ -148,7 +146,6 @@ export default function ConnectForm() {
     <MindLoginCard
       appName={APP_NAME}
       defaultIssuer={DEFAULT_ISSUER}
-      accent={SHELL_ACCENT}
       tagline="One surface for everything in your pod."
       onLogin={async ({ issuer }) => {
         // Platform owns the redirect: web does the browser OIDC redirect
