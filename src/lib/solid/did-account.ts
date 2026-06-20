@@ -47,7 +47,10 @@ function serverRoot(server?: string): string {
   return base.endsWith("/") ? base : base + "/";
 }
 
-async function readControls(accountIndex: string, headers: Record<string, string>): Promise<DidControls> {
+async function readControls(
+  accountIndex: string,
+  headers: Record<string, string>,
+): Promise<DidControls> {
   let res: Response;
   try {
     res = await fetch(accountIndex, { headers: { Accept: "application/json", ...headers } });
@@ -70,7 +73,10 @@ async function readControls(accountIndex: string, headers: Record<string, string
  * We try the dedicated doc first (cheap, unauthenticated, no 401 noise on
  * solid-server-rs) and fall back to the account index for the CSS fork.
  */
-async function readDidControls(root: string, headers: Record<string, string>): Promise<DidControls> {
+async function readDidControls(
+  root: string,
+  headers: Record<string, string>,
+): Promise<DidControls> {
   try {
     const did = await readControls(`${root}.account/did/`, headers);
     if (did.challenge && did.login) return did;
@@ -150,7 +156,9 @@ export async function loginWithDid(opts: {
     body: JSON.stringify({ did: opts.did, nonce: challenge.nonce, proofValue }),
   });
   if (finishRes.status === 401 || finishRes.status === 403) {
-    throw new Error("This DID is not linked to an account on this server, or the proof was rejected.");
+    throw new Error(
+      "This DID is not linked to an account on this server, or the proof was rejected.",
+    );
   }
   if (!finishRes.ok) throw new Error(`DID login failed (${finishRes.status}).`);
   const { authorization, webid, webId } = (await finishRes.json()) as {

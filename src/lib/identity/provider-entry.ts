@@ -64,7 +64,7 @@ function hostOf(url: string): string {
 /** Find the stored login for a provider, matched by host (scheme/path-agnostic). */
 export function matchAccountForServer(
   accounts: ProviderAccount[],
-  server: string
+  server: string,
 ): ProviderAccount | undefined {
   const h = hostOf(server);
   if (!h) return undefined;

@@ -119,7 +119,7 @@ export function isManualAccountValid(draft: ManualAccountDraft): boolean {
  */
 export function buildManualPassport(
   draft: ManualAccountDraft,
-  ctx: { id: string; did: string; createdAt: string }
+  ctx: { id: string; did: string; createdAt: string },
 ): Passport {
   const server = normalizeServer(draft.server);
   if (!server) throw new Error("Invalid provider address.");

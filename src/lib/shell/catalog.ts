@@ -1,15 +1,15 @@
 "use client";
 
+import type { SolidDataset } from "@inrupt/solid-client";
 import {
-  getSolidDataset,
-  getThingAll,
-  getStringNoLocale,
   getInteger,
+  getSolidDataset,
+  getStringNoLocale,
+  getThingAll,
   getUrl,
 } from "@inrupt/solid-client";
 import { resourceExistsByListing } from "@/lib/solid/pod-fs";
-import type { HostedApp, AppEmbed, AppTrust, WidgetDecl, WidgetSize } from "./types";
-import type { SolidDataset } from "@inrupt/solid-client";
+import type { AppEmbed, AppTrust, HostedApp, WidgetDecl, WidgetSize } from "./types";
 
 /**
  * Read the pod-owned app catalog at `{podRoot}home/apps.ttl` (PRD-APPS §4) into
@@ -53,9 +53,7 @@ function asEmbed(v: string | null): AppEmbed | undefined {
 }
 
 function asTrust(v: string | null): AppTrust | undefined {
-  return v === "first-party" || v === "community" || v === "untrusted"
-    ? v
-    : undefined;
+  return v === "first-party" || v === "community" || v === "untrusted" ? v : undefined;
 }
 
 function asSize(v: string | null): WidgetSize | undefined {
@@ -74,8 +72,7 @@ function collectWidgets(ds: SolidDataset): Map<string, WidgetDecl[]> {
     if (!types.includes(MIND_WIDGET)) continue;
     const appKey = getStringNoLocale(thing, MIND_APP_REF);
     const id = getStringNoLocale(thing, MIND_ID);
-    const url =
-      getStringNoLocale(thing, MIND_URL) ?? getUrl(thing, MIND_URL) ?? undefined;
+    const url = getStringNoLocale(thing, MIND_URL) ?? getUrl(thing, MIND_URL) ?? undefined;
     if (!appKey || !id || !url) continue;
     const decl: WidgetDecl = {
       id,
@@ -99,10 +96,7 @@ function collectWidgets(ds: SolidDataset): Map<string, WidgetDecl[]> {
  * be read. Gated on a container listing so a fresh pod doesn't 404 (and log).
  * Never throws — the shell falls back to its built-ins on any failure.
  */
-export async function readCatalog(
-  podRoot: string,
-  fetchFn: typeof fetch
-): Promise<HostedApp[]> {
+export async function readCatalog(podRoot: string, fetchFn: typeof fetch): Promise<HostedApp[]> {
   const base = ensureSlash(podRoot);
   const docUrl = `${base}home/apps.ttl`;
   try {
@@ -117,11 +111,9 @@ export async function readCatalog(
       const types = thing.predicates[RDF_TYPE]?.namedNodes ?? [];
       if (!types.includes(MIND_APP)) continue;
       const hash = thing.url.indexOf("#");
-      const key =
-        hash >= 0 ? thing.url.slice(hash + 1) : thing.url.slice(base.length);
+      const key = hash >= 0 ? thing.url.slice(hash + 1) : thing.url.slice(base.length);
       if (!key) continue;
-      const url =
-        getStringNoLocale(thing, MIND_URL) ?? getUrl(thing, MIND_URL) ?? undefined;
+      const url = getStringNoLocale(thing, MIND_URL) ?? getUrl(thing, MIND_URL) ?? undefined;
       rows.push({
         app: {
           key,

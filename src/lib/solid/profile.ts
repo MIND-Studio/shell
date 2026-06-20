@@ -1,14 +1,14 @@
 "use client";
 
 import {
+  createThing,
   getSolidDataset,
-  getThing,
   getStringNoLocale,
+  getThing,
   getUrl,
+  saveSolidDatasetAt,
   setStringNoLocale,
   setThing,
-  saveSolidDatasetAt,
-  createThing,
 } from "@inrupt/solid-client";
 import { getPlatform } from "@/lib/platform";
 import type { AccountIdentity } from "@/lib/shell/types";
@@ -52,8 +52,7 @@ export async function readProfile(webId: string): Promise<AccountIdentity> {
     const displayName =
       (me && (getStringNoLocale(me, FOAF_NAME) ?? getStringNoLocale(me, VCARD_FN))) ??
       webIdLabel(webId);
-    const avatarUrl =
-      (me && (getUrl(me, VCARD_PHOTO) ?? getUrl(me, FOAF_IMG))) ?? undefined;
+    const avatarUrl = (me && (getUrl(me, VCARD_PHOTO) ?? getUrl(me, FOAF_IMG))) ?? undefined;
     return { webId, displayName: displayName ?? undefined, avatarUrl: avatarUrl ?? undefined };
   } catch {
     return { webId, displayName: webIdLabel(webId) };

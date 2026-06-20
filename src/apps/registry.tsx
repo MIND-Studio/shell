@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, type ComponentType } from "react";
+import { type ComponentType, lazy } from "react";
 
 /**
  * Registry of in-process apps the shell can render in the app body (PRD §3:

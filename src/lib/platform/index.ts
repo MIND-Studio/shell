@@ -24,19 +24,19 @@ import { isNative, platformKind } from "./detect";
 import type { Platform, PlatformKind } from "./types";
 import { webPlatform } from "./web";
 
-export type {
-  Platform,
-  PlatformKind,
-  PlatformAuth,
-  PlatformCrypto,
-  PlatformBiometric,
-  PlatformAutofill,
-  PlatformStorage,
-  PlatformPod,
-  AutofillIndexEntry,
-  AsyncCryptoCore,
-} from "./types";
 export { isNative, platformKind } from "./detect";
+export type {
+  AsyncCryptoCore,
+  AutofillIndexEntry,
+  Platform,
+  PlatformAuth,
+  PlatformAutofill,
+  PlatformBiometric,
+  PlatformCrypto,
+  PlatformKind,
+  PlatformPod,
+  PlatformStorage,
+} from "./types";
 
 let platformPromise: Promise<Platform> | null = null;
 

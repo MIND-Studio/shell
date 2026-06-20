@@ -1,21 +1,13 @@
+import { getActivePassportSession, subscribePassportSession } from "@/lib/solid/passport-session";
+import { ensureContainerChain, readdir, readFileText, writeFileText } from "@/lib/solid/pod-fs";
 import {
-  readdir,
-  readFileText,
-  writeFileText,
-  ensureContainerChain,
-} from "@/lib/solid/pod-fs";
-import {
-  subscribePassportSession,
-  getActivePassportSession,
-} from "@/lib/solid/passport-session";
-import {
-  PROTOCOL_VERSION,
-  isBridgeMessage,
-  type ChildMessage,
-  type ParentMessage,
   type BridgeIdentity,
   type BridgeTheme,
+  type ChildMessage,
   type FetchMsg,
+  isBridgeMessage,
+  type ParentMessage,
+  PROTOCOL_VERSION,
 } from "./bridge-protocol";
 import type { HostedApp } from "./types";
 
@@ -252,7 +244,7 @@ export function createBridge(opts: BridgeOptions): Bridge {
   function logLine(t: string, ref: string, status: number | string, started: number) {
     // Never log bodies/secrets — only event type, resource, status, latency.
     console.debug(
-      `[bridge] ${t} ${ref} → ${status} (${Math.round(performance.now() - started)}ms) webId=${identity.webId}`
+      `[bridge] ${t} ${ref} → ${status} (${Math.round(performance.now() - started)}ms) webId=${identity.webId}`,
     );
   }
 
@@ -273,9 +265,7 @@ export function createBridge(opts: BridgeOptions): Bridge {
       // tripped on download) is base64-framed so the bytes survive postMessage.
       const buf = await res.arrayBuffer();
       const textual = isTextualContentType(res.headers.get("content-type") ?? "");
-      const body = textual
-        ? new TextDecoder().decode(buf)
-        : bytesToBase64(new Uint8Array(buf));
+      const body = textual ? new TextDecoder().decode(buf) : bytesToBase64(new Uint8Array(buf));
       const encoding = textual ? "utf8" : "base64";
       logLine("fetch", url, res.status, started);
       post({

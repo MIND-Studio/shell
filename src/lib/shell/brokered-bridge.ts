@@ -20,18 +20,12 @@
  */
 import type { HostedApp } from "./types";
 
-export function brokeredHandoffAvailable(
-  server: string | undefined,
-  apps: HostedApp[]
-): boolean {
+export function brokeredHandoffAvailable(server: string | undefined, apps: HostedApp[]): boolean {
   const target = hostOf(server);
   if (!target) return false;
   return apps.some(
     (a) =>
-      a.enabled &&
-      a.embed === "iframe" &&
-      a.trust === "first-party" &&
-      hostOf(a.url) === target
+      a.enabled && a.embed === "iframe" && a.trust === "first-party" && hostOf(a.url) === target,
   );
 }
 

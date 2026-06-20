@@ -73,7 +73,7 @@ export default function QuickNoteWidget() {
         } catch {
           return { name: f.name, title: "(unreadable note)", body: "" } as Note;
         }
-      })
+      }),
     );
     setNotes(loaded);
   }, []);
@@ -120,9 +120,7 @@ export default function QuickNoteWidget() {
       await client.write(name, body, "text/markdown");
       setText("");
       // Optimistic prepend, then reconcile against the pod.
-      setNotes((prev) =>
-        [{ name, title: titleFromBody(body), body }, ...(prev ?? [])].slice(0, 5)
-      );
+      setNotes((prev) => [{ name, title: titleFromBody(body), body }, ...(prev ?? [])].slice(0, 5));
       await loadNotes(client);
     } catch (e) {
       const denied = Boolean((e as { denied?: boolean })?.denied);
@@ -235,9 +233,7 @@ export default function QuickNoteWidget() {
                       title="Open in Notes"
                       onClick={() => clientRef.current?.open(n.name)}
                       onMouseEnter={() => setHover(n.name)}
-                      onMouseLeave={() =>
-                        setHover((h) => (h === n.name ? null : h))
-                      }
+                      onMouseLeave={() => setHover((h) => (h === n.name ? null : h))}
                       style={{
                         display: "block",
                         width: "100%",

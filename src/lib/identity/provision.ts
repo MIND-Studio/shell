@@ -25,10 +25,10 @@
  * creds, into the sealed registry) leave this module.
  */
 
-import { createPassportAccount } from "@/lib/solid/account";
 import { getPlatform } from "@/lib/platform";
-import { newPassportId, sign as walletSign } from "./wallet";
+import { createPassportAccount } from "@/lib/solid/account";
 import type { Passport } from "./types";
+import { newPassportId, sign as walletSign } from "./wallet";
 
 /** Origin of a server URL, trailing-slash-free (e.g. "http://localhost:3101"). */
 function origin(server: string): string {

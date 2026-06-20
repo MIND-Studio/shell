@@ -60,26 +60,17 @@ export interface CryptoCore extends IdentityCore {
     masterPassword: string,
     saltB64: string,
     params: KdfParams,
-    wrappedDataKeyB64: string
+    wrappedDataKeyB64: string,
   ): SessionHandle;
   lock(handle: SessionHandle): void;
   encryptItem(
     handle: SessionHandle,
     itemId: string,
     version: number,
-    plaintextJson: string
+    plaintextJson: string,
   ): SealedItem;
-  decryptItem(
-    handle: SessionHandle,
-    itemId: string,
-    version: number,
-    sealed: SealedItem
-  ): string;
-  changePassword(
-    handle: SessionHandle,
-    newPassword: string,
-    params: KdfParams
-  ): VaultBootstrap;
+  decryptItem(handle: SessionHandle, itemId: string, version: number, sealed: SealedItem): string;
+  changePassword(handle: SessionHandle, newPassword: string, params: KdfParams): VaultBootstrap;
   generatePassword(opts: PwGenOptions): string;
   generatePassphrase(words: number, separator: string): string;
   totpAt(secretB32: string, unixSeconds: number, period: number, digits: number): string;
@@ -146,7 +137,7 @@ export interface IdentityCore {
     masterPassword: string,
     saltB64: string,
     params: KdfParams,
-    wrappedSeedB64: string
+    wrappedSeedB64: string,
   ): UnlockedIdentity;
   /**
    * Mint a session from a base64 32-byte seed; returns its handle. The seed is

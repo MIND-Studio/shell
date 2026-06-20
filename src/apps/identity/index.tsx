@@ -18,45 +18,40 @@
  * the prototype (the caveat is shown in the UI).
  */
 
-import { useCallback, useEffect, useState } from "react";
 import {
   Button,
-  Input,
-  Label,
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
 } from "@mind-studio/ui";
-import { useShell } from "@/lib/shell/context";
+import { useCallback, useEffect, useState } from "react";
+import { readAndVerify, writeBinding } from "@/lib/identity/binding";
+import { enterPassport, logoutPassport } from "@/lib/identity/passport-login";
+import { captureManualPassport, provisionPassport } from "@/lib/identity/provision";
+import { type Passport, walletBackupUrl } from "@/lib/identity/types";
 import {
-  createWallet,
-  unlockWallet,
-  lockWallet,
   addPassport,
+  createWallet,
+  exportBlob,
+  lockWallet,
+  unlockWallet,
   updatePassport,
   sign as walletSign,
-  exportBlob,
 } from "@/lib/identity/wallet";
-import { provisionPassport, captureManualPassport } from "@/lib/identity/provision";
-import { enterPassport, logoutPassport } from "@/lib/identity/passport-login";
-import {
-  getActivePassportSession,
-  subscribePassportSession,
-} from "@/lib/solid/passport-session";
-import { writeBinding, readAndVerify } from "@/lib/identity/binding";
+import { useShell } from "@/lib/shell/context";
 import { loginWithDid, serverSupportsDid } from "@/lib/solid/did-account";
-import { walletBackupUrl, type Passport } from "@/lib/identity/types";
-import { writeFileText, ensureContainerChain } from "@/lib/solid/pod-fs";
+import { getActivePassportSession, subscribePassportSession } from "@/lib/solid/passport-session";
+import { ensureContainerChain, writeFileText } from "@/lib/solid/pod-fs";
 import { useWallet } from "./useWallet";
 
 /** Subscribe to the active passport-session id (null when on the main WebID). */
 function useActivePassportId(): string | null {
-  const [id, setId] = useState<string | null>(
-    () => getActivePassportSession()?.passportId ?? null
-  );
+  const [id, setId] = useState<string | null>(() => getActivePassportSession()?.passportId ?? null);
   useEffect(() => {
     const sync = () => setId(getActivePassportSession()?.passportId ?? null);
     sync();
@@ -77,8 +72,8 @@ export default function IdentityApp() {
           </p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">Your wallet</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            A portable master identity (a <code>did:key</code>) that controls your
-            per-server passports — without replacing any WebID or changing any server.
+            A portable master identity (a <code>did:key</code>) that controls your per-server
+            passports — without replacing any WebID or changing any server.
           </p>
         </header>
 
@@ -128,8 +123,8 @@ function CreateScreen() {
     <Card>
       <h2 className="text-lg font-semibold">Create your master identity</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        We generate an Ed25519 key inside the audited crypto core and wrap its seed
-        under this master password. The seed never leaves the core.
+        We generate an Ed25519 key inside the audited crypto core and wrap its seed under this
+        master password. The seed never leaves the core.
       </p>
       <div className="mt-5 space-y-3">
         <div className="space-y-1.5">
@@ -267,8 +262,7 @@ function Dashboard({ did, passports }: { did: string; passports: Passport[] }) {
               {activePassport.webId}
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              No password typed — the shell signed in for you with this passport&apos;s
-              stored key.
+              No password typed — the shell signed in for you with this passport&apos;s stored key.
             </p>
           </div>
           <Button
@@ -287,10 +281,7 @@ function Dashboard({ did, passports }: { did: string; passports: Passport[] }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-muted-foreground">Master identity</h2>
-            <p
-              data-testid="master-did"
-              className="mt-1 break-all font-mono text-sm font-medium"
-            >
+            <p data-testid="master-did" className="mt-1 break-all font-mono text-sm font-medium">
               {did}
             </p>
           </div>
@@ -328,8 +319,7 @@ function Dashboard({ did, passports }: { did: string; passports: Passport[] }) {
           </Button>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Each passport is a fresh WebID + pod on a server, all controlled by your
-          one master DID.
+          Each passport is a fresh WebID + pod on a server, all controlled by your one master DID.
         </p>
         <div className="mt-4 space-y-3">
           {passports.length === 0 && (
@@ -397,7 +387,7 @@ function SessionBindingCard({
       setStatus(
         result.ok
           ? "Verified: this WebID is controlled by your DID — checked locally, no server."
-          : `Not verified: ${result.reason ?? "unknown"}.`
+          : `Not verified: ${result.reason ?? "unknown"}.`,
       );
     } catch (e) {
       setVerdict("fail");
@@ -412,8 +402,8 @@ function SessionBindingCard({
       <h2 className="text-sm font-semibold text-muted-foreground">This session</h2>
       <p className="mt-1 break-all font-mono text-xs">{webId}</p>
       <p className="mt-2 text-xs text-muted-foreground">
-        Prove your master DID controls the WebID you're signed in as, by writing a
-        signed binding into this pod.
+        Prove your master DID controls the WebID you're signed in as, by writing a signed binding
+        into this pod.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={() => void bind()} disabled={busy !== ""}>
@@ -465,7 +455,7 @@ function PassportRow({
   // definite yes; otherwise we probe once so the UI only offers DID login where
   // it can actually work — no dead-end clicks against stock CSS. null = checking.
   const [didSupported, setDidSupported] = useState<boolean | null>(
-    passport.didLinked ? true : null
+    passport.didLinked ? true : null,
   );
   const podRoot = passport.podRoots[0];
 
@@ -522,7 +512,7 @@ function PassportRow({
       setStatus(
         e instanceof Error
           ? `Couldn't write the binding: ${e.message} (sign in as this passport to bind it).`
-          : "Couldn't write the binding."
+          : "Couldn't write the binding.",
       );
     } finally {
       setBusy("");
@@ -536,7 +526,9 @@ function PassportRow({
     try {
       const { result } = await readAndVerify(podRoot, did);
       setVerdict(result.ok ? "ok" : "fail");
-      setStatus(result.ok ? "Verified — controlled by your DID." : `Not verified: ${result.reason}.`);
+      setStatus(
+        result.ok ? "Verified — controlled by your DID." : `Not verified: ${result.reason}.`,
+      );
     } catch (e) {
       setVerdict("fail");
       setStatus(e instanceof Error ? e.message : "Verification failed.");
@@ -554,7 +546,11 @@ function PassportRow({
     setDidMsg(null);
     setDidVerdict(null);
     try {
-      const { token, webId } = await loginWithDid({ did, sign: walletSign, server: passport.server });
+      const { token, webId } = await loginWithDid({
+        did,
+        sign: walletSign,
+        server: passport.server,
+      });
       // Positive confirmation, server-agnostically: a DID-session server
       // (solid-server-rs) returns the authenticated WebID directly; the CSS
       // DID-fork returns no WebID, so we confirm the token unlocks the account
@@ -572,7 +568,7 @@ function PassportRow({
         setDidMsg(
           webId
             ? `Authenticated as ${webId} by signing a challenge — no password.`
-            : "Authenticated to this account by signing a challenge — no password. A fresh account token was minted."
+            : "Authenticated to this account by signing a challenge — no password. A fresh account token was minted.",
         );
         // A successful login proves the DID is linked; remember it for the badge.
         if (!passport.didLinked) await updatePassport(passport.id, { didLinked: true });
@@ -596,9 +592,7 @@ function PassportRow({
       setStatus("Opened in the rail.");
     } catch (e) {
       setStatus(
-        e instanceof Error
-          ? `Couldn't open: ${e.message}`
-          : "Couldn't open this passport's pod."
+        e instanceof Error ? `Couldn't open: ${e.message}` : "Couldn't open this passport's pod.",
       );
     } finally {
       setBusy("");
@@ -653,22 +647,18 @@ function PassportRow({
       ) : canSwitch ? (
         <div className="mt-2 space-y-1.5">
           <p className="text-[11px] text-muted-foreground">
-            Sign in as this passport — the shell holds its key, so no password and
-            no redirect. Then you can write its binding or open its pod.
+            Sign in as this passport — the shell holds its key, so no password and no redirect. Then
+            you can write its binding or open its pod.
           </p>
-          <Button
-            size="sm"
-            onClick={() => void switchTo()}
-            disabled={busy !== ""}
-          >
+          <Button size="sm" onClick={() => void switchTo()} disabled={busy !== ""}>
             {busy === "switch" ? "Signing in…" : "Switch to this passport"}
           </Button>
         </div>
       ) : (
         <div className="mt-2 space-y-1.5">
           <p className="text-[11px] text-muted-foreground">
-            This passport was captured manually (no stored key). Sign in as it the
-            usual way to write its binding or open its pod.
+            This passport was captured manually (no stored key). Sign in as it the usual way to
+            write its binding or open its pod.
           </p>
           <Button size="sm" variant="outline" asChild>
             <a href="/connect">Sign in as this passport</a>
@@ -690,14 +680,14 @@ function PassportRow({
         </div>
         {didSupported === false ? (
           <p className="mt-1 text-[11px] text-muted-foreground">
-            This server is stock CSS — it doesn&apos;t accept DID login. The shell
-            signs you in here with this passport&apos;s stored key instead.
+            This server is stock CSS — it doesn&apos;t accept DID login. The shell signs you in here
+            with this passport&apos;s stored key instead.
           </p>
         ) : (
           <>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Prove control of your master DID by signing a one-time challenge and
-              get a fresh account session — no password, no redirect.
+              Prove control of your master DID by signing a one-time challenge and get a fresh
+              account session — no password, no redirect.
             </p>
             <div className="mt-2 flex items-center gap-2">
               <Button
@@ -809,8 +799,8 @@ function AddPassportDialog({ did, onClose }: { did: string; onClose: () => void 
         <DialogHeader>
           <DialogTitle>Add a passport</DialogTitle>
           <DialogDescription>
-            Mint a fresh WebID + pod on a server, or capture an existing one. Either
-            way your one master DID controls it.
+            Mint a fresh WebID + pod on a server, or capture an existing one. Either way your one
+            master DID controls it.
           </DialogDescription>
         </DialogHeader>
 
@@ -847,8 +837,8 @@ function AddPassportDialog({ did, onClose }: { did: string; onClose: () => void 
               )}
               {serverDid === "no" && (
                 <p className="mt-1 text-[11px] text-amber-500">
-                  Stock CSS — no DID login here. The passport still works via its
-                  stored key (password-less switch).
+                  Stock CSS — no DID login here. The passport still works via its stored key
+                  (password-less switch).
                 </p>
               )}
             </div>
@@ -864,10 +854,9 @@ function AddPassportDialog({ did, onClose }: { did: string; onClose: () => void 
             </label>
             <p className="rounded-md bg-muted/50 p-2 text-[11px] leading-snug text-muted-foreground">
               The shell creates a brand-new account on the server with a fresh WebID,
-              <strong> generates a strong password for you</strong> (you never type or
-              see one), and stores a key so it can sign you in later with no password
-              and no redirect. The key is sealed in your encrypted wallet — never
-              written to a pod.
+              <strong> generates a strong password for you</strong> (you never type or see one), and
+              stores a key so it can sign you in later with no password and no redirect. The key is
+              sealed in your encrypted wallet — never written to a pod.
             </p>
           </div>
         ) : (
@@ -925,9 +914,8 @@ function Field({
 function XssCaveat() {
   return (
     <p className="mt-3 rounded-md bg-muted/50 p-2 text-[11px] leading-snug text-muted-foreground">
-      Prototype note: in the browser, your unlocked seed lives in memory for the
-      session (a documented XSS tradeoff). The hardened native build custodies it
-      in the OS keychain.
+      Prototype note: in the browser, your unlocked seed lives in memory for the session (a
+      documented XSS tradeoff). The hardened native build custodies it in the OS keychain.
     </p>
   );
 }

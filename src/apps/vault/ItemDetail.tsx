@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { Button, Separator } from "@mind-studio/ui";
+import { useCallback, useEffect, useState } from "react";
 import type { AsyncCryptoCore } from "@/lib/platform";
-import type { VaultItemMeta, VaultItemSecret } from "@/lib/vault/model";
 import { copyWithAutoClear } from "@/lib/vault/clipboard";
+import type { VaultItemMeta, VaultItemSecret } from "@/lib/vault/model";
 
 const TOTP_PERIOD = 30;
 const TOTP_DIGITS = 6;

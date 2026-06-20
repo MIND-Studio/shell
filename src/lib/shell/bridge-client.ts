@@ -14,10 +14,10 @@
  */
 
 import {
-  PROTOCOL_VERSION,
+  type BridgeEntry,
   type BridgeIdentity,
   type BridgeTheme,
-  type BridgeEntry,
+  PROTOCOL_VERSION,
 } from "./bridge-protocol";
 
 export interface WidgetSession {
@@ -59,7 +59,7 @@ export interface WidgetClient {
    */
   fetch(
     url: string,
-    init?: { method?: string; headers?: Record<string, string> }
+    init?: { method?: string; headers?: Record<string, string> },
   ): Promise<BridgeFetchResult>;
   /**
    * Write text to a resource (whole-file PUT), relative to the scope ceiling.
@@ -161,8 +161,7 @@ export function createWidgetClient(): WidgetClient {
     readdir: (path) => request<BridgeEntry[]>("mind:readdir", { path }),
     read: (path) => request<string>("mind:read", { path }),
     fetch: (url, init) => request<BridgeFetchResult>("mind:fetch", { url, init }),
-    write: (path, body, contentType) =>
-      request<void>("mind:write", { path, body, contentType }),
+    write: (path, body, contentType) => request<void>("mind:write", { path, body, contentType }),
     resize(height) {
       post({ t: "mind:resize", v: PROTOCOL_VERSION, height: Math.round(height) });
     },

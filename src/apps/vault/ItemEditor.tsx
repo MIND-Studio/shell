@@ -1,22 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Button,
-  Input,
-  Label,
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@mind-studio/ui";
+import { useEffect, useState } from "react";
 import type { AsyncCryptoCore } from "@/lib/platform";
 import type { VaultItemKind, VaultItemMeta, VaultItemSecret } from "@/lib/vault/model";
 import { PasswordGenerator } from "./PasswordGenerator";
@@ -215,7 +215,7 @@ export function ItemEditor({
                             digits: true,
                             symbols: true,
                             avoidAmbiguous: true,
-                          })
+                          }),
                         );
                       } catch {
                         // Panel still opens; its own Generate surfaces errors.

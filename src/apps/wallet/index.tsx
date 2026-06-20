@@ -19,25 +19,25 @@
  * framed as the canonical document about to be signed.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { Button, Input, Label } from "@mind-studio/ui";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getDid, sign as walletSign } from "@/lib/identity/wallet";
 import { useShell } from "@/lib/shell/context";
 import { appZone } from "@/lib/shell/types";
+import { ensureContainerChain, writeFileText } from "@/lib/solid/pod-fs";
 import { readProfile } from "@/lib/solid/profile";
-import { writeFileText, ensureContainerChain } from "@/lib/solid/pod-fs";
-import { sign as walletSign, getDid } from "@/lib/identity/wallet";
 import {
-  fetchTokens,
-  registerSigningDid,
   buildTransfer,
   canonicalTransfer,
-  submitTransfer,
+  fetchTokens,
+  type LedgerEntry,
   ledgerOrigin,
-  toSnapshot,
+  registerSigningDid,
+  submitTransfer,
   type TokensResult,
   type TokensView,
-  type LedgerEntry,
+  toSnapshot,
 } from "@/lib/tokens/api";
 
 // ---- presentation helpers ----------------------------------------------------
@@ -102,7 +102,7 @@ function useCountUp(target: number, duration = 700): number {
     const t0 = performance.now();
     const tick = (t: number) => {
       const p = Math.min(1, (t - t0) / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
+      const eased = 1 - (1 - p) ** 3;
       setValue(Math.round(from + (target - from) * eased));
       if (p < 1) raf = requestAnimationFrame(tick);
       else fromRef.current = target;
@@ -151,7 +151,7 @@ export default function WalletApp() {
         await writeFileText(
           `${zone}snapshot.json`,
           JSON.stringify(toSnapshot(r.view)),
-          "application/json"
+          "application/json",
         );
       } catch {
         /* widget just shows its empty state */
@@ -177,11 +177,13 @@ export default function WalletApp() {
     return (
       <Centered>
         <div className="max-w-sm space-y-2 text-center">
-          <p className="text-3xl" aria-hidden>💰</p>
+          <p className="text-3xl" aria-hidden>
+            💰
+          </p>
           <p className="text-lg">This server doesn’t offer the MIND ledger.</p>
           <p className="text-sm text-muted-foreground">
-            The token ledger is a <code>solid-server-rs</code> feature; your current
-            identity lives on a server without it.
+            The token ledger is a <code>solid-server-rs</code> feature; your current identity lives
+            on a server without it.
           </p>
         </div>
       </Centered>
@@ -190,9 +192,7 @@ export default function WalletApp() {
   if (result.status === "disabled") {
     return (
       <Centered>
-        <p className="text-muted-foreground">
-          The token ledger is switched off on this server.
-        </p>
+        <p className="text-muted-foreground">The token ledger is switched off on this server.</p>
       </Centered>
     );
   }
@@ -221,11 +221,7 @@ export default function WalletApp() {
 }
 
 function Centered({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-full min-h-[40vh] items-center justify-center p-8">
-      {children}
-    </div>
-  );
+  return <div className="flex h-full min-h-[40vh] items-center justify-center p-8">{children}</div>;
 }
 
 // ---- main view -----------------------------------------------------------------
@@ -243,10 +239,7 @@ function WalletView({
   authedFetch: typeof fetch;
   onRefresh: () => Promise<void>;
 }) {
-  const history = useMemo(
-    () => [...view.history].sort((a, b) => b.seq - a.seq),
-    [view.history]
-  );
+  const history = useMemo(() => [...view.history].sort((a, b) => b.seq - a.seq), [view.history]);
 
   return (
     <div className="relative h-full overflow-y-auto">
@@ -407,7 +400,8 @@ function TxRow({ entry, unit, index }: { entry: LedgerEntry; unit: string; index
           {meta.label}
           {entry.counterparty && (
             <span className="text-muted-foreground" title={entry.counterparty}>
-              {" "}· {truncateId(entry.counterparty, 24, 8)}
+              {" "}
+              · {truncateId(entry.counterparty, 24, 8)}
             </span>
           )}
         </p>
@@ -466,8 +460,7 @@ function SendPanel({
   const amountNum = Number(amount);
   const validAmount = Number.isInteger(amountNum) && amountNum > 0;
   const withinBalance = amountNum <= view.balance;
-  const validTo =
-    (to.startsWith("http://") || to.startsWith("https://")) && to !== view.owner;
+  const validTo = (to.startsWith("http://") || to.startsWith("https://")) && to !== view.owner;
   const canReview = validAmount && withinBalance && validTo && did != null;
   // Name the blocker instead of silently disabling Review — but only once the
   // user has typed something invalid (an empty form needs no nagging).
@@ -537,7 +530,11 @@ function SendPanel({
           headSeq: fresh.view.seq,
           headHash: fresh.view.head_hash,
         });
-        let res = await submitTransfer(origin, transfer, await walletSign(canonicalTransfer(transfer)));
+        let res = await submitTransfer(
+          origin,
+          transfer,
+          await walletSign(canonicalTransfer(transfer)),
+        );
         if (res.status === "conflict") {
           // Stale head (a meter charge can land between fetch and submit):
           // rebuild against the server-reported head and re-sign — never
@@ -548,7 +545,11 @@ function SendPanel({
             prev_hash: res.expectedPrevHash,
             seq: res.expectedSeq,
           };
-          res = await submitTransfer(origin, transfer, await walletSign(canonicalTransfer(transfer)));
+          res = await submitTransfer(
+            origin,
+            transfer,
+            await walletSign(canonicalTransfer(transfer)),
+          );
         }
         if (res.status === "ok") {
           setPhase({ p: "sent", seq: res.seq });
@@ -578,7 +579,7 @@ function SendPanel({
         }
       }
     },
-    [authedFetch, origin, onSent, view.unit]
+    [authedFetch, origin, onSent, view.unit],
   );
 
   return (

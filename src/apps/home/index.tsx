@@ -14,10 +14,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useShell } from "@/lib/shell/context";
 import { WidgetTile, widgetColSpan } from "@/components/shell/WidgetTile";
+import { useShell } from "@/lib/shell/context";
 import { readHomeLayout, writeHomeLayout } from "@/lib/shell/home-layout";
-import type { HostedApp, WidgetDecl, HomeLayoutItem } from "@/lib/shell/types";
+import type { HomeLayoutItem, HostedApp, WidgetDecl } from "@/lib/shell/types";
 
 /** Default Home: every enabled app's FIRST declared widget (PRD-DASHBOARD §8b). */
 function defaultLayout(apps: HostedApp[]): HomeLayoutItem[] {
@@ -32,10 +32,7 @@ function defaultLayout(apps: HostedApp[]): HomeLayoutItem[] {
 }
 
 /** Resolve an `"appKey#widgetId"` ref against the live app list. */
-function resolveRef(
-  ref: string,
-  apps: HostedApp[]
-): { app: HostedApp; widget: WidgetDecl } | null {
+function resolveRef(ref: string, apps: HostedApp[]): { app: HostedApp; widget: WidgetDecl } | null {
   const i = ref.indexOf("#");
   if (i < 0) return null;
   const app = apps.find((a) => a.key === ref.slice(0, i));
@@ -77,7 +74,7 @@ export default function HomeApp() {
       setItems(renumbered);
       if (workspacePod) void writeHomeLayout(workspacePod, renumbered).catch(() => {});
     },
-    [workspacePod]
+    [workspacePod],
   );
 
   const onDrop = useCallback(
@@ -90,7 +87,7 @@ export default function HomeApp() {
       next.splice(target, 0, moved);
       persist(next);
     },
-    [items, persist]
+    [items, persist],
   );
 
   const tiles = useMemo(
@@ -98,7 +95,7 @@ export default function HomeApp() {
       (items ?? [])
         .map((it) => ({ it, r: resolveRef(it.ref, apps) }))
         .filter((t): t is { it: HomeLayoutItem; r: NonNullable<typeof t.r> } => !!t.r),
-    [items, apps]
+    [items, apps],
   );
 
   if (items === null) {

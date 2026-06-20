@@ -38,9 +38,7 @@ export function ProjectSwitcher() {
             <span className="truncate">{p.name}</span>
           </DropdownMenuItem>
         ))}
-        {projects.length === 0 && (
-          <DropdownMenuItem disabled>No projects yet</DropdownMenuItem>
-        )}
+        {projects.length === 0 && <DropdownMenuItem disabled>No projects yet</DropdownMenuItem>}
       </DropdownMenuContent>
     </DropdownMenu>
   );

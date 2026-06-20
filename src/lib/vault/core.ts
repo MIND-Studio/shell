@@ -15,39 +15,39 @@
  * behind the numeric handle.
  */
 
+import type {
+  CreatedIdentity,
+  CryptoCore,
+  HibpPrefix,
+  IdentityHandle,
+  KdfParams,
+  PwGenOptions,
+  SealedItem,
+  SessionHandle,
+  UnlockedIdentity,
+  VaultBootstrap,
+} from "./crypto-contract";
 import init, {
   init as initPanicHook,
   calibrateKdf as wasmCalibrateKdf,
-  createVault as wasmCreateVault,
-  unlock as wasmUnlock,
-  lock as wasmLock,
-  encryptItem as wasmEncryptItem,
-  decryptItem as wasmDecryptItem,
   changePassword as wasmChangePassword,
-  generatePassword as wasmGeneratePassword,
+  createVault as wasmCreateVault,
+  decryptItem as wasmDecryptItem,
+  encryptItem as wasmEncryptItem,
   generatePassphrase as wasmGeneratePassphrase,
-  totpAt as wasmTotpAt,
+  generatePassword as wasmGeneratePassword,
   hibpPrefix as wasmHibpPrefix,
   identityCreate as wasmIdentityCreate,
-  identityUnlock as wasmIdentityUnlock,
   identityFromSeed as wasmIdentityFromSeed,
+  identityLock as wasmIdentityLock,
+  identityUnlock as wasmIdentityUnlock,
+  lock as wasmLock,
   masterDid as wasmMasterDid,
   signDetached as wasmSignDetached,
+  totpAt as wasmTotpAt,
+  unlock as wasmUnlock,
   verifyBinding as wasmVerifyBinding,
-  identityLock as wasmIdentityLock,
 } from "./pkg/crypto_core";
-import type {
-  CryptoCore,
-  KdfParams,
-  VaultBootstrap,
-  SealedItem,
-  PwGenOptions,
-  HibpPrefix,
-  SessionHandle,
-  CreatedIdentity,
-  UnlockedIdentity,
-  IdentityHandle,
-} from "./crypto-contract";
 
 let corePromise: Promise<CryptoCore> | null = null;
 
@@ -63,7 +63,7 @@ function build(): CryptoCore {
       masterPassword: string,
       saltB64: string,
       params: KdfParams,
-      wrappedDataKeyB64: string
+      wrappedDataKeyB64: string,
     ): SessionHandle {
       return wasmUnlock(masterPassword, saltB64, params, wrappedDataKeyB64) as SessionHandle;
     },
@@ -74,7 +74,7 @@ function build(): CryptoCore {
       handle: SessionHandle,
       itemId: string,
       version: number,
-      plaintextJson: string
+      plaintextJson: string,
     ): SealedItem {
       return wasmEncryptItem(handle, itemId, version, plaintextJson) as SealedItem;
     },
@@ -82,15 +82,11 @@ function build(): CryptoCore {
       handle: SessionHandle,
       itemId: string,
       version: number,
-      sealed: SealedItem
+      sealed: SealedItem,
     ): string {
       return wasmDecryptItem(handle, itemId, version, sealed);
     },
-    changePassword(
-      handle: SessionHandle,
-      newPassword: string,
-      params: KdfParams
-    ): VaultBootstrap {
+    changePassword(handle: SessionHandle, newPassword: string, params: KdfParams): VaultBootstrap {
       return wasmChangePassword(handle, newPassword, params) as VaultBootstrap;
     },
     generatePassword(opts: PwGenOptions): string {
@@ -114,9 +110,14 @@ function build(): CryptoCore {
       masterPassword: string,
       saltB64: string,
       params: KdfParams,
-      wrappedSeedB64: string
+      wrappedSeedB64: string,
     ): UnlockedIdentity {
-      return wasmIdentityUnlock(masterPassword, saltB64, params, wrappedSeedB64) as UnlockedIdentity;
+      return wasmIdentityUnlock(
+        masterPassword,
+        saltB64,
+        params,
+        wrappedSeedB64,
+      ) as UnlockedIdentity;
     },
     identityFromSeed(seedB64: string): IdentityHandle {
       return wasmIdentityFromSeed(seedB64);

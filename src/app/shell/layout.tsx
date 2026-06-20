@@ -1,11 +1,11 @@
 "use client";
 
-import { ShellProvider, useShell } from "@/lib/shell/context";
-import { WorkspaceRail } from "@/components/shell/WorkspaceRail";
 import { AccountSwitcher } from "@/components/shell/AccountSwitcher";
-import { ProjectSwitcher } from "@/components/shell/ProjectSwitcher";
-import { AppSwitcher } from "@/components/shell/AppSwitcher";
 import { AppMenu } from "@/components/shell/AppMenu";
+import { AppSwitcher } from "@/components/shell/AppSwitcher";
+import { ProjectSwitcher } from "@/components/shell/ProjectSwitcher";
+import { WorkspaceRail } from "@/components/shell/WorkspaceRail";
+import { ShellProvider, useShell } from "@/lib/shell/context";
 
 /**
  * The shell chrome (PRD §3 wireframe). A full-bleed, non-scrolling frame:

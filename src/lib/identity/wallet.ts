@@ -26,14 +26,14 @@
  * (AGENTS.md rule #5). OK to log: the public did, server origin, event type.
  */
 
-import { getPlatform, type AsyncCryptoCore } from "@/lib/platform";
+import { type AsyncCryptoCore, getPlatform } from "@/lib/platform";
 import type { KdfParams } from "@/lib/vault/crypto-contract";
 import { buildManualPassport, type ManualAccountDraft } from "./manual-account";
 import {
-  REGISTRY_ITEM_ID,
-  WALLET_STORAGE_KEY,
   type Passport,
+  REGISTRY_ITEM_ID,
   type StoredWallet,
+  WALLET_STORAGE_KEY,
   type WalletView,
 } from "./types";
 
@@ -140,7 +140,7 @@ export async function createWallet(masterPassword: string): Promise<WalletView> 
     masterPassword,
     bootstrap.salt_b64,
     bootstrap.kdf,
-    bootstrap.wrapped_data_key_b64
+    bootstrap.wrapped_data_key_b64,
   );
 
   const w: StoredWallet = {
@@ -173,13 +173,13 @@ export async function unlockWallet(masterPassword: string): Promise<WalletView> 
     masterPassword,
     w.identity.salt_b64,
     w.identity.kdf,
-    w.identity.wrapped_seed_b64
+    w.identity.wrapped_seed_b64,
   );
   const vaultHandle = await c.unlock(
     masterPassword,
     w.registry.bootstrap.salt_b64,
     w.registry.bootstrap.kdf,
-    w.registry.bootstrap.wrapped_data_key_b64
+    w.registry.bootstrap.wrapped_data_key_b64,
   );
   let passports: Passport[] = [];
   if (w.registry.sealed) {
@@ -187,7 +187,7 @@ export async function unlockWallet(masterPassword: string): Promise<WalletView> 
       vaultHandle,
       REGISTRY_ITEM_ID,
       w.registry.version,
-      w.registry.sealed
+      w.registry.sealed,
     );
     passports = JSON.parse(json) as Passport[];
   }
@@ -235,14 +235,9 @@ export async function addPassport(passport: Passport): Promise<WalletView> {
 }
 
 /** Patch a passport (by id) in the encrypted registry. */
-export async function updatePassport(
-  id: string,
-  patch: Partial<Passport>
-): Promise<WalletView> {
+export async function updatePassport(id: string, patch: Partial<Passport>): Promise<WalletView> {
   if (!unlocked) throw new Error("Wallet is locked.");
-  unlocked.passports = unlocked.passports.map((p) =>
-    p.id === id ? { ...p, ...patch } : p
-  );
+  unlocked.passports = unlocked.passports.map((p) => (p.id === id ? { ...p, ...patch } : p));
   await saveRegistry();
   emit();
   return getView();
@@ -258,7 +253,7 @@ export async function updatePassport(
 export async function markEmailVerified(id: string): Promise<WalletView> {
   if (!unlocked) throw new Error("Wallet is locked.");
   unlocked.passports = unlocked.passports.map((p) =>
-    p.id === id && p.creds ? { ...p, creds: { ...p.creds, emailVerified: true } } : p
+    p.id === id && p.creds ? { ...p, creds: { ...p.creds, emailVerified: true } } : p,
   );
   await saveRegistry();
   emit();
@@ -273,9 +268,7 @@ export async function markEmailVerified(id: string): Promise<WalletView> {
  * validation live in {@link buildManualPassport}; this only supplies the id, did,
  * and timestamp and persists. Throws if the draft is invalid.
  */
-export async function addManualProviderAccount(
-  draft: ManualAccountDraft
-): Promise<WalletView> {
+export async function addManualProviderAccount(draft: ManualAccountDraft): Promise<WalletView> {
   if (!unlocked) throw new Error("Wallet is locked.");
   const passport = buildManualPassport(draft, {
     id: newPassportId(),

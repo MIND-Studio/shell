@@ -21,11 +21,11 @@
  * last-active-passport pointer (a registry id) plus the already-unlocked wallet.
  */
 
-import { getPlatform } from "@/lib/platform";
-import { hasWallet, getView, getPassports } from "@/lib/identity/wallet";
+import { isVerificationPending } from "@/lib/identity/email";
 import { enterPassport } from "@/lib/identity/passport-login";
 import { LAST_ACTIVE_PASSPORT_KEY, type Passport } from "@/lib/identity/types";
-import { isVerificationPending } from "@/lib/identity/email";
+import { getPassports, getView, hasWallet } from "@/lib/identity/wallet";
+import { getPlatform } from "@/lib/platform";
 import { getActivePassportSession } from "./passport-session";
 
 /** Where the front door should send the user on load. */

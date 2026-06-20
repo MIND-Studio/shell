@@ -16,32 +16,42 @@
  * and are never written to the pod, localStorage, or any log.
  */
 
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+} from "@mind-studio/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Input, Label, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@mind-studio/ui";
+import { PrototypeWarning } from "@/components/PrototypeWarning";
+import { type AsyncCryptoCore, getPlatform } from "@/lib/platform";
 import { useShell } from "@/lib/shell/context";
 import { appZone } from "@/lib/shell/types";
-import { getPlatform, type AsyncCryptoCore } from "@/lib/platform";
-import type { SessionHandle } from "@/lib/vault/crypto-contract";
-import {
-  loadVault,
-  createVaultOnPod,
-  saveItem,
-  loadItemSecret,
-  deleteItem,
-  changeMasterPassword,
-  newItemId,
-  type LoadedVault,
-  type VaultItemMeta,
-  type VaultItemSecret,
-  type VaultItemKind,
-} from "@/lib/vault/model";
 import { useAutoLock } from "@/lib/vault/autolock";
 import { cancelAutoClear } from "@/lib/vault/clipboard";
-import { ItemEditor, type EditorDraft } from "./ItemEditor";
+import type { SessionHandle } from "@/lib/vault/crypto-contract";
+import {
+  changeMasterPassword,
+  createVaultOnPod,
+  deleteItem,
+  type LoadedVault,
+  loadItemSecret,
+  loadVault,
+  newItemId,
+  saveItem,
+  type VaultItemKind,
+  type VaultItemMeta,
+  type VaultItemSecret,
+} from "@/lib/vault/model";
 import { ItemDetail } from "./ItemDetail";
-import { ProviderAccounts } from "./ProviderAccounts";
+import { type EditorDraft, ItemEditor } from "./ItemEditor";
 import { PasswordGenerator } from "./PasswordGenerator";
-import { PrototypeWarning } from "@/components/PrototypeWarning";
+import { ProviderAccounts } from "./ProviderAccounts";
 
 type Phase = "loading" | "setup" | "locked" | "unlocked";
 
@@ -49,7 +59,7 @@ export default function VaultApp() {
   const { workspacePod, project, ready } = useShell();
   const zone = useMemo(
     () => (workspacePod ? appZone(workspacePod, "vault", project) : null),
-    [workspacePod, project]
+    [workspacePod, project],
   );
 
   const [core, setCore] = useState<AsyncCryptoCore | null>(null);
@@ -113,7 +123,12 @@ export default function VaultApp() {
           const v = await createVaultOnPod(core, zone, workspacePod, pw);
           setVault(v);
           // Unlock immediately with the just-set password.
-          const h = await core.unlock(pw, v.bootstrap.salt_b64, v.bootstrap.kdf, v.bootstrap.wrapped_data_key_b64);
+          const h = await core.unlock(
+            pw,
+            v.bootstrap.salt_b64,
+            v.bootstrap.kdf,
+            v.bootstrap.wrapped_data_key_b64,
+          );
           setHandle(h);
           setPhase("unlocked");
         }}
@@ -129,7 +144,7 @@ export default function VaultApp() {
             pw,
             vault.bootstrap.salt_b64,
             vault.bootstrap.kdf,
-            vault.bootstrap.wrapped_data_key_b64
+            vault.bootstrap.wrapped_data_key_b64,
           );
           setHandle(h);
           setPhase("unlocked");
@@ -261,8 +276,8 @@ function UnlockScreen({ onUnlock }: { onUnlock: (pw: string) => Promise<void> })
           <div className="text-4xl">🔒</div>
           <h2 className="mt-3 text-xl font-semibold">Unlock your vault</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            The vault has its own master password — set when it was created, separate from the
-            one that unlocks your identity on this device.
+            The vault has its own master password — set when it was created, separate from the one
+            that unlocks your identity on this device.
           </p>
         </div>
         <div className="space-y-1.5">
@@ -320,7 +335,7 @@ function UnlockedVault({
       (m) =>
         m.title.toLowerCase().includes(q) ||
         (m.url ?? "").toLowerCase().includes(q) ||
-        (m.username ?? "").toLowerCase().includes(q)
+        (m.username ?? "").toLowerCase().includes(q),
     );
   }, [vault.index, query]);
 
@@ -335,7 +350,9 @@ function UnlockedVault({
     setSecretError(null);
     loadItemSecret(core, zone, handle, selected)
       .then((s) => !cancelled && setSecret(s))
-      .catch((e) => !cancelled && setSecretError(e instanceof Error ? e.message : "decrypt failed"));
+      .catch(
+        (e) => !cancelled && setSecretError(e instanceof Error ? e.message : "decrypt failed"),
+      );
     return () => {
       cancelled = true;
     };
@@ -437,9 +454,7 @@ function UnlockedVault({
 
         {/* detail — hidden on mobile until an item is picked; always shown ≥md. */}
         <div
-          className={`min-w-0 flex-1 overflow-y-auto p-6 md:block ${
-            selected ? "block" : "hidden"
-          }`}
+          className={`min-w-0 flex-1 overflow-y-auto p-6 md:block ${selected ? "block" : "hidden"}`}
         >
           {selected && (
             <button

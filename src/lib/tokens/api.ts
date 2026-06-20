@@ -72,10 +72,7 @@ export function ledgerOrigin(webId: string): string {
 }
 
 /** Fetch the caller's balance + signed history. Never throws on HTTP errors. */
-export async function fetchTokens(
-  fetchFn: typeof fetch,
-  origin: string
-): Promise<TokensResult> {
+export async function fetchTokens(fetchFn: typeof fetch, origin: string): Promise<TokensResult> {
   let res: Response;
   try {
     res = await fetchFn(`${origin}.tokens`, {
@@ -100,7 +97,7 @@ export async function fetchTokens(
 export async function registerSigningDid(
   fetchFn: typeof fetch,
   origin: string,
-  did: string
+  did: string,
 ): Promise<void> {
   const res = await fetchFn(`${origin}.tokens/did`, {
     method: "POST",
@@ -175,7 +172,7 @@ export type TransferResult =
 export async function submitTransfer(
   origin: string,
   transfer: SignedTransfer,
-  proofB64: string
+  proofB64: string,
 ): Promise<TransferResult> {
   let res: Response;
   try {
@@ -211,9 +208,10 @@ export async function submitTransfer(
   if (res.status === 403) {
     return {
       status: "forbidden",
-      detail: body.error === "transfers_disabled"
-        ? "Transfers are disabled on this server."
-        : "The server rejected the transfer signature.",
+      detail:
+        body.error === "transfers_disabled"
+          ? "Transfers are disabled on this server."
+          : "The server rejected the transfer signature.",
     };
   }
   return { status: "error", detail: body.error ?? `Transfer failed (${res.status}).` };

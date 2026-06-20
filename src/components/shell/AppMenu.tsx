@@ -14,10 +14,7 @@ export function AppMenu() {
   const active = apps.find((a) => a.key === activeAppKey);
 
   return (
-    <aside
-      aria-label="App menu"
-      className="flex h-full flex-col gap-3 glass-panel px-3 py-4"
-    >
+    <aside aria-label="App menu" className="flex h-full flex-col gap-3 glass-panel px-3 py-4">
       <div className="flex items-center gap-2 px-1">
         <span aria-hidden className="text-base">
           {active?.icon ?? "▦"}

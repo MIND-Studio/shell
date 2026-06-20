@@ -17,18 +17,18 @@
  * CSS-only: external OIDC issuers and native still use the redirect path below it.
  */
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button, Input, Label } from "@mind-studio/ui";
-import { rememberIssuer, storedIssuer } from "@/lib/solid/session";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { loginWithClientCredentials } from "@/lib/identity/passport-login";
+import { addPassport, getDid, getView, newPassportId } from "@/lib/identity/wallet";
 import {
-  loginToAccount,
   accountWebIds,
+  loginToAccount,
   mintClientCredentials,
   podRootFromWebId,
 } from "@/lib/solid/account-login";
-import { loginWithClientCredentials } from "@/lib/identity/passport-login";
-import { getView, getDid, addPassport, newPassportId } from "@/lib/identity/wallet";
+import { rememberIssuer, storedIssuer } from "@/lib/solid/session";
 
 export default function PasswordLoginCard() {
   const router = useRouter();
@@ -120,15 +120,12 @@ export default function PasswordLoginCard() {
       <Card>
         <Eyebrow>Choose a pod</Eyebrow>
         <h2 className="mt-1 text-lg font-semibold">This account has several pods</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Pick the WebID to continue as.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Pick the WebID to continue as.</p>
         <div className="mt-4 space-y-2">
           {choices.map((w) => {
             // Lead with the pod name (last path segment of the pod root, e.g.
             // "alice") — a raw WebID URL is hard to scan; keep it as a subline.
-            const podName =
-              podRootFromWebId(w).replace(/\/$/, "").split("/").pop() || w;
+            const podName = podRootFromWebId(w).replace(/\/$/, "").split("/").pop() || w;
             return (
               <button
                 key={w}

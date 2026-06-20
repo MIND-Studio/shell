@@ -1,7 +1,16 @@
 "use client";
 
+import {
+  Button,
+  Checkbox,
+  Input,
+  Label,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@mind-studio/ui";
 import { useCallback, useState } from "react";
-import { Button, Input, Label, Checkbox, Tabs, TabsList, TabsTrigger, TabsContent } from "@mind-studio/ui";
 import type { AsyncCryptoCore } from "@/lib/platform";
 import { copyWithAutoClear } from "@/lib/vault/clipboard";
 
@@ -34,7 +43,7 @@ export function PasswordGenerator({
     setError(null);
     try {
       setValue(
-        await core.generatePassword({ length, upper, lower, digits, symbols, avoidAmbiguous })
+        await core.generatePassword({ length, upper, lower, digits, symbols, avoidAmbiguous }),
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not generate");

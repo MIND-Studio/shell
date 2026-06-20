@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  handleIncomingRedirect,
-  type ISessionInfo,
-} from "@inrupt/solid-client-authn-browser";
+import { handleIncomingRedirect, type ISessionInfo } from "@inrupt/solid-client-authn-browser";
 import { session } from "./session";
 
 const RETURN_TO_KEY = "mind-shell:return-to";

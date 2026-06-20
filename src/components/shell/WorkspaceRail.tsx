@@ -1,11 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   Button,
-  Input,
-  Label,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -13,6 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  Input,
+  Label,
   Tabs,
   TabsContent,
   TabsList,
@@ -22,15 +20,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@mind-studio/ui";
-import { useShell } from "@/lib/shell/context";
-import type { Workspace } from "@/lib/shell/types";
-import { DEFAULT_ISSUER, storedIssuer } from "@/lib/solid/session";
-import { serverSupportsDid } from "@/lib/solid/did-account";
-import { serverSupportsAccountCreation } from "@/lib/solid/account";
-import { serverRequiresEmailVerification } from "@/lib/solid/email-verification";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { isValidEmail, suggestPlusAlias } from "@/lib/identity/email";
 import { willSealWorkspaceLogin } from "@/lib/identity/provider-entry";
 import { getView as getWalletView } from "@/lib/identity/wallet";
+import { useShell } from "@/lib/shell/context";
+import type { Workspace } from "@/lib/shell/types";
+import { serverSupportsAccountCreation } from "@/lib/solid/account";
+import { serverSupportsDid } from "@/lib/solid/did-account";
+import { serverRequiresEmailVerification } from "@/lib/solid/email-verification";
+import { DEFAULT_ISSUER, storedIssuer } from "@/lib/solid/session";
 
 /**
  * The vertical workspace rail (wireframe far-left column). Each workspace the
@@ -121,9 +121,9 @@ function NewWorkspaceButton() {
         <DialogHeader>
           <DialogTitle>Add a workspace</DialogTitle>
           <DialogDescription>
-            Join a pod you already have access to, or create a brand-new one —
-            just name it and the shell handles the account. Either way it reuses
-            your existing identity (no second WebID).
+            Join a pod you already have access to, or create a brand-new one — just name it and the
+            shell handles the account. Either way it reuses your existing identity (no second
+            WebID).
           </DialogDescription>
         </DialogHeader>
 
@@ -306,17 +306,17 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
         />
         {canCreate === false ? (
           <p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs leading-snug text-amber-700 dark:text-amber-200">
-            This server can&rsquo;t create extra pods — it makes one pod per
-            identity, at sign-in. Use &ldquo;Join existing&rdquo; to add a pod
-            you already have access to, or choose a different server below.
+            This server can&rsquo;t create extra pods — it makes one pod per identity, at sign-in.
+            Use &ldquo;Join existing&rdquo; to add a pod you already have access to, or choose a
+            different server below.
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">
             {willStoreLogin ? (
               <>
-                That&rsquo;s all we need — the shell creates the pod and saves its
-                login to your Vault (under &ldquo;Provider accounts&rdquo;), so you
-                can sign in to it directly later.
+                That&rsquo;s all we need — the shell creates the pod and saves its login to your
+                Vault (under &ldquo;Provider accounts&rdquo;), so you can sign in to it directly
+                later.
               </>
             ) : (
               <>
@@ -329,7 +329,9 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
               </>
             )}{" "}
             {didAware === true && hasWallet ? (
-              <span className="text-primary">This server supports DID — it&rsquo;ll be linked.</span>
+              <span className="text-primary">
+                This server supports DID — it&rsquo;ll be linked.
+              </span>
             ) : didAware === true && !hasWallet ? (
               <span>Set up a master identity to link a DID here.</span>
             ) : didAware === false && willStoreLogin ? (
@@ -366,8 +368,8 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
             />
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
-                A real inbox keeps this account recoverable and passes verification.
-                Tip: a <code>+alias</code> lets one inbox cover many accounts.
+                A real inbox keeps this account recoverable and passes verification. Tip: a{" "}
+                <code>+alias</code> lets one inbox cover many accounts.
               </p>
               {isValidEmail(email.trim()) && name.trim() && (
                 <button
@@ -407,18 +409,16 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
             onChange={(e) => setServer(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            Where the pod lives. A DID-aware CSS links your identity; a stock one
-            still works.
+            Where the pod lives. A DID-aware CSS links your identity; a stock one still works.
           </p>
           {crossIssuer && canCreate !== false && (
             <p
               data-testid="ws-cross-issuer-warning"
               className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs leading-snug text-amber-700 dark:text-amber-200"
             >
-              Heads-up: your sign-in lives on a different server, so this
-              workspace will look empty here — its pod only answers a session
-              from its own server. Its login is saved to your Vault for signing
-              in there directly.
+              Heads-up: your sign-in lives on a different server, so this workspace will look empty
+              here — its pod only answers a session from its own server. Its login is saved to your
+              Vault for signing in there directly.
             </p>
           )}
         </div>

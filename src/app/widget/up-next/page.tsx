@@ -65,14 +65,14 @@ export default function UpNextWidget() {
         } catch {
           return { name: f.name, title: "(unreadable event)", start: null } as Event;
         }
-      })
+      }),
     );
     // Upcoming only (anything from the start of today), soonest first.
     const floor = new Date();
     floor.setHours(0, 0, 0, 0);
     const upcoming = all
       .filter((e) => e.start && e.start.getTime() >= floor.getTime())
-      .sort((a, b) => (a.start!.getTime() - b.start!.getTime()))
+      .sort((a, b) => a.start!.getTime() - b.start!.getTime())
       .slice(0, 4);
     setEvents(upcoming);
   }, []);
