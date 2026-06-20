@@ -671,6 +671,72 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
 
   const setProject = useCallback((p: Project | null) => setProjectState(p), []);
 
+  // Create a project container in the CURRENT workspace pod and switch to it.
+  // Unlike createWorkspace (which provisions a whole pod), a project is just a
+  // `{podRoot}projects/{id}/` container the signed-in user already owns — one
+  // privileged PUT of project.ttl. We write the Projects-app vocab (ws:Project +
+  // an Owner ws:Membership) so the embedded Projects app reads it as owned; the
+  // bridge can't do this itself (its writes are scope-checked to the app zone),
+  // which is why creation lives in the shell. After writing we re-enumerate and
+  // setProject() — IframeHost re-brokers the new project into the frame, no reload.
+  const createProject = useCallback(
+    async ({ name }: { name: string }) => {
+      const pod = workspacePod;
+      if (!pod || !webId) throw new Error("You need an active workspace to create a project.");
+      const title = name.trim();
+      if (!title) throw new Error("Give the project a name.");
+      const slug =
+        title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "project";
+      const rand =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID().slice(0, 8)
+          : Math.random().toString(36).slice(2, 10);
+      const id = `${slug}-${rand}`;
+      const root = ensureSlash(pod);
+      const url = `${root}projects/${id}/`;
+      const start = new Date();
+      const end = new Date(start);
+      end.setUTCFullYear(end.getUTCFullYear() + 1);
+      const ownerName =
+        account?.displayName ??
+        webId
+          .replace(/\/profile\/card#me$/, "")
+          .split("/")
+          .filter(Boolean)
+          .pop() ??
+        "Owner";
+      const esc = (s: string) => s.replace(/"/g, '\\"');
+      const ttl = `@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ws: <https://mind.dev/ns/workspace#> .
+
+<#project> a ws:Project ;
+    dct:identifier "${esc(id)}" ;
+    dct:title "${esc(title)}" ;
+    ws:status "active" ;
+    ws:startDate "${start.toISOString().slice(0, 10)}" ;
+    ws:endDate "${end.toISOString().slice(0, 10)}" .
+
+<#m-owner> a ws:Membership ;
+    ws:agent <${webId}> ;
+    ws:role ws:Owner ;
+    ws:name "${esc(ownerName)}" .
+`;
+      const fetchFn = (await getPlatform()).pod.fetch;
+      const r = await fetchFn(`${url}project.ttl`, {
+        method: "PUT",
+        headers: { "Content-Type": "text/turtle" },
+        body: ttl,
+      });
+      if (!r.ok && r.status !== 205) throw new Error(`Could not create the project (${r.status}).`);
+      await loadActiveWorkspace(root);
+      setProject({ id, url, name: title });
+    },
+    [webId, workspacePod, account, loadActiveWorkspace, setProject],
+  );
+
   // C4: re-resolve identity after a passport switch. Drop the workspace override
   // (the previous identity's active pod isn't ours anymore) and re-run refresh,
   // which reads the now-active WebID from the platform (the passport) and its pod.
@@ -704,6 +770,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
     addWorkspace,
     createWorkspace,
     setProject,
+    createProject,
     refresh,
     reloadIdentity,
     signOut,
