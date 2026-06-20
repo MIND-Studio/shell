@@ -188,6 +188,15 @@ export interface ShellContextValue {
    */
   createWorkspace(opts: { name: string; server?: string; email?: string }): Promise<void>;
   setProject(project: Project | null): void;
+  /**
+   * Create a project container ({podRoot}projects/{id}/) in the CURRENT
+   * workspace and switch to it. The user types only a name; project.ttl is
+   * written in the Projects-app vocab (ws:Project + an Owner ws:Membership) so
+   * the embedded Projects app reads it as owned. This is a shell-side privileged
+   * write — the bridge scope-checks app writes to their own zone, so an embedded
+   * app can't create a sibling project itself (it asks the shell via this UI).
+   */
+  createProject(opts: { name: string }): Promise<void>;
   /** Re-read workspace/project/app context from the pod. */
   refresh(): Promise<void>;
   /**
