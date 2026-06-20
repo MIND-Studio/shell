@@ -17,11 +17,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # The Vault crypto core is Rust -> WASM. tsc and `next build` import the
+      # generated bindings (src/lib/vault/pkg, gitignored), so CI must build
+      # them before typechecking — this also verifies the crypto FFI contract.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crypto-core
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       # Installs @mind-studio/* from GitHub Packages via the committed .npmrc.
       - run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Build crypto-core WASM bindings
+        run: npm run wasm
+      # Lint + format gate (Biome). Fails on errors; warnings are the
+      # documented legacy baseline tracked in biome.json.
+      - run: npx biome ci .
       - run: npx tsc --noEmit
+      - run: npm run test
       - run: npm run build
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN || secrets.GITHUB_TOKEN }}

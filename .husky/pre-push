@@ -1,0 +1,15 @@
+# Fast confidence gate before code leaves this machine — mirrors CI's
+# correctness checks. The slow `next build` is left to CI.
+# Bypass in a pinch with `git push --no-verify`.
+npm run lint || exit 1
+
+# Typecheck needs the generated WASM bindings (src/lib/vault/pkg, built via
+# `npm run wasm`). Skip when absent so contributors without the Rust toolchain
+# aren't blocked — CI always builds WASM and typechecks for real.
+if [ -f src/lib/vault/pkg/crypto_core.d.ts ]; then
+  npm run typecheck || exit 1
+else
+  echo "⏭  Skipping typecheck — WASM bindings not built (run 'npm run wasm'). CI typechecks for real."
+fi
+
+npm run test || exit 1
