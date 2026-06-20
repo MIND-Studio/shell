@@ -83,6 +83,12 @@ export interface BridgeOptions {
 export interface Bridge {
   /** Push a new color mode to the app (re-broadcasts welcome). Idempotent. */
   setTheme(theme: BridgeTheme): void;
+  /** Push a project switch to the app (re-broadcasts welcome). Idempotent.
+   *  Mirrors {@link setTheme}: the frame stays mounted and the negotiated
+   *  protocol version is preserved, so the welcome actually reaches the app —
+   *  unlike tearing down and recreating the bridge, whose proactive welcome
+   *  goes out at the un-negotiated host version and a v1 app drops it. */
+  setProject(project: BridgeIdentity["project"]): void;
   dispose(): void;
 }
 
@@ -390,6 +396,11 @@ export function createBridge(opts: BridgeOptions): Bridge {
     setTheme(theme: BridgeTheme) {
       if (theme === currentTheme) return;
       currentTheme = theme;
+      welcome();
+    },
+    setProject(project: BridgeIdentity["project"]) {
+      if ((currentIdentity.project?.id ?? null) === (project?.id ?? null)) return;
+      currentIdentity = { ...currentIdentity, project };
       welcome();
     },
     dispose() {

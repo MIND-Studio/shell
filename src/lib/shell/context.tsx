@@ -95,6 +95,8 @@ const NOTES_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_NOTES_URL, 3120, "/note
 const CONTACTS_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_CONTACTS_URL, 3130, "/contacts");
 const CALENDAR_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_CALENDAR_URL, 3140, "/calendar");
 const PHOTOS_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_PHOTOS_URL, 3150, "/photos");
+// Projects serves its app surface at the origin root (no sub-route).
+const PROJECTS_URL = siblingUrl(process.env.NEXT_PUBLIC_APP_PROJECTS_URL, 3160, "");
 // Slides (mind-slides-v0) is embedded at its `/studio` route. It brokers like the
 // rest of the suite (its `src/lib/solid/broker.ts` does the v1 handshake), so
 // embedded it uses the shell's SSO + pod — decks save to `{shellPod}mind-slides/
@@ -244,6 +246,15 @@ function builtinApps(): HostedApp[] {
       embed: "iframe",
       trust: "first-party",
       widgets: [RECENT_WIDGET],
+    },
+    {
+      key: "projects",
+      label: "Projects",
+      icon: "📋",
+      enabled: true,
+      url: PROJECTS_URL,
+      embed: "iframe",
+      trust: "first-party",
     },
     {
       key: "notes",
