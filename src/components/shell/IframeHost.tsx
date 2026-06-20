@@ -111,13 +111,24 @@ export function IframeHost({
       bridge.dispose();
       bridgeRef.current = null;
     };
-  }, [app, app.url, app.trust, webId, workspacePod, scope, allowWrite, project, podFetch, onResize, onOpen]);
+    // `project` is intentionally NOT a dep: a project switch must NOT tear down
+    // and recreate the bridge (its proactive welcome would go out at the
+    // un-negotiated host version and a v1 app drops it). It's pushed to the live
+    // bridge via setProject below, exactly like theme.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [app, app.url, app.trust, webId, workspacePod, scope, allowWrite, podFetch, onResize, onOpen]);
 
   // Push shell theme changes to the live bridge so the embedded app's chrome
   // tracks the shell without re-mounting the iframe.
   useEffect(() => {
     bridgeRef.current?.setTheme(theme);
   }, [theme]);
+
+  // Push project switches to the live bridge so an embedded project-scoped app
+  // (Projects) follows the shell's switcher — again without re-mounting the frame.
+  useEffect(() => {
+    bridgeRef.current?.setProject(project ? { id: project.id, name: project.name } : null);
+  }, [project]);
 
   if (!app.url) {
     return (
