@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Button, useMindTheme } from "@mind-studio/ui";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { getPlatform } from "@/lib/platform";
-import { readProfile, readPodRoot, writeProfileName } from "@/lib/solid/profile";
+import { readPodRoot, readProfile, writeProfileName } from "@/lib/solid/profile";
 
 /**
  * Settings — a lean surface outside the /shell chrome (so no ShellProvider). It
@@ -196,9 +196,7 @@ export default function SettingsPage() {
           <div className="mt-3 flex items-center justify-between rounded-xl border border-[color:var(--border)] bg-card p-5">
             <div>
               <p className="text-sm font-medium">Theme</p>
-              <p className="text-xs text-muted-foreground">
-                Currently {dark ? "dark" : "light"}.
-              </p>
+              <p className="text-xs text-muted-foreground">Currently {dark ? "dark" : "light"}.</p>
             </div>
             <Button variant="outline" onClick={() => setMode(dark ? "light" : "dark")}>
               {dark ? "Switch to light" : "Switch to dark"}

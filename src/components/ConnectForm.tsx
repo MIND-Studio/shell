@@ -1,20 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { ISessionInfo } from "@inrupt/solid-client-authn-browser";
+import { clearLastIdentity, MindLoginCard, writeLastIdentity } from "@mind-studio/core";
+import { Button } from "@mind-studio/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  MindLoginCard,
-  writeLastIdentity,
-  clearLastIdentity,
-} from "@mind-studio/core";
-import { Button } from "@mind-studio/ui";
-import { DEFAULT_ISSUER } from "@/lib/solid/session";
-import { getPlatform } from "@/lib/platform";
-import { hasWallet, getView } from "@/lib/identity/wallet";
-import WalletOnboarding from "@/components/WalletOnboarding";
+import { useEffect, useState } from "react";
 import PasswordLoginCard from "@/components/PasswordLoginCard";
-import type { ISessionInfo } from "@inrupt/solid-client-authn-browser";
+import WalletOnboarding from "@/components/WalletOnboarding";
+import { getView, hasWallet } from "@/lib/identity/wallet";
+import { getPlatform } from "@/lib/platform";
+import { DEFAULT_ISSUER } from "@/lib/solid/session";
 
 const APP_NAME = "Shell";
 
@@ -85,8 +81,7 @@ export default function ConnectForm() {
         // resolves. (Web's onAuthCallback is a no-op.)
         unlistenCallback = p.auth.onAuthCallback((info) => {
           if (info.isLoggedIn) adopt(info, true);
-          else if (!cancelled)
-            setError("Sign-in did not complete. Please try again.");
+          else if (!cancelled) setError("Sign-in did not complete. Please try again.");
         });
 
         // Belt-and-suspenders: when the user switches back from the system
@@ -120,9 +115,7 @@ export default function ConnectForm() {
   if (webId && !switching) {
     return (
       <div className="rounded-lg border border-primary/40 bg-primary/5 p-5">
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
-          Connected
-        </p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">Connected</p>
         <p className="mt-2 break-all font-mono text-sm" data-testid="webid">
           {webId}
         </p>

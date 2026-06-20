@@ -27,7 +27,7 @@ const ACTIVITY_EVENTS: (keyof DocumentEventMap)[] = [
 export function useAutoLock(
   active: boolean,
   onLock: () => void,
-  idleMs: number = DEFAULT_IDLE_MS
+  idleMs: number = DEFAULT_IDLE_MS,
 ): void {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockRef = useRef(onLock);

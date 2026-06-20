@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@mind-studio/ui";
 import { mind } from "@mind-studio/ui/themes";
+import type { Metadata } from "next";
+import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 // Fleet webfonts — the Mind theme's font axis (ui 0.4.0) references these three
@@ -16,9 +16,7 @@ export const metadata: Metadata = {
     "A Dock-style shell that wraps your Mind identity and hosts every app on one surface — shipping with Vault, a zero-knowledge password manager.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // The shell renders its own chrome (rail, switchers, account menu) inside the
   // /shell route, so the root layout stays minimal: just the theme shell.
   return (

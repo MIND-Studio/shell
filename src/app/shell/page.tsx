@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense, useRef } from "react";
 import { Button } from "@mind-studio/ui";
-import { useShell } from "@/lib/shell/context";
+import { Suspense, useRef } from "react";
 import { getAppComponent } from "@/apps/registry";
 import { IframeHost } from "@/components/shell/IframeHost";
+import { useShell } from "@/lib/shell/context";
 import type { HostedApp } from "@/lib/shell/types";
 
 /**
@@ -45,10 +45,7 @@ export default function ShellPage() {
   return (
     <div className="relative h-full w-full">
       {livingIframes.map((a) => (
-        <div
-          key={a.key}
-          className={a.key === activeAppKey ? "h-full w-full" : "hidden"}
-        >
+        <div key={a.key} className={a.key === activeAppKey ? "h-full w-full" : "hidden"}>
           <IframeHost app={a} />
         </div>
       ))}
@@ -64,9 +61,7 @@ export default function ShellPage() {
               <div className="mx-auto grid size-12 place-items-center rounded-xl bg-primary/15 text-2xl">
                 {meta?.icon ?? "▦"}
               </div>
-              <h2 className="mt-4 text-lg font-semibold">
-                {meta?.label ?? "This app"}
-              </h2>
+              <h2 className="mt-4 text-lg font-semibold">{meta?.label ?? "This app"}</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 {meta?.label ?? "This app"} opens in its own tab.
               </p>
@@ -87,9 +82,7 @@ export default function ShellPage() {
 function AppLoading({ label }: { label?: string }) {
   return (
     <div className="grid h-full place-items-center">
-      <p className="text-sm text-muted-foreground">
-        Loading {label ?? "app"}…
-      </p>
+      <p className="text-sm text-muted-foreground">Loading {label ?? "app"}…</p>
     </div>
   );
 }

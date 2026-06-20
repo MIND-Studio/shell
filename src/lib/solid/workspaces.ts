@@ -1,22 +1,22 @@
 "use client";
 
 import {
-  getSolidDataset,
+  buildThing,
   createSolidDataset,
-  saveSolidDatasetAt,
+  createThing,
+  getSolidDataset,
+  getStringNoLocale,
   getThingAll,
   getUrl,
   getUrlAll,
-  getStringNoLocale,
-  setThing,
   removeThing,
-  buildThing,
-  createThing,
+  saveSolidDatasetAt,
+  setThing,
 } from "@inrupt/solid-client";
 import { getPlatform } from "@/lib/platform";
-import { resourceExistsByListing } from "@/lib/solid/pod-fs";
-import { shellZone } from "@/lib/shell/types";
 import type { WorkspaceRef, WorkspaceRole } from "@/lib/shell/types";
+import { shellZone } from "@/lib/shell/types";
+import { resourceExistsByListing } from "@/lib/solid/pod-fs";
 
 /**
  * The per-identity Workspace index (PRD-IDENTITY.md §4 — "Mechanism A").
@@ -59,9 +59,7 @@ async function noStoreFetch(): Promise<typeof fetch> {
 }
 
 function asRole(value: string | null): WorkspaceRole {
-  return value && (ROLES as readonly string[]).includes(value)
-    ? (value as WorkspaceRole)
-    : "owner";
+  return value && (ROLES as readonly string[]).includes(value) ? (value as WorkspaceRole) : "owner";
 }
 
 /**

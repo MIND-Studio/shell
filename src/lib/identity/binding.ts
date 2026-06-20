@@ -20,8 +20,8 @@
  * guaranteed byte-identical.
  */
 
-import { ensureContainerChain, readFileText, writeFileText } from "@/lib/solid/pod-fs";
 import { getPlatform } from "@/lib/platform";
+import { ensureContainerChain, readFileText, writeFileText } from "@/lib/solid/pod-fs";
 import { sign as walletSign } from "./wallet";
 
 const MIND_NS = "https://mind.dev/ns/v1#";
@@ -161,7 +161,7 @@ export async function readBinding(podRoot: string): Promise<BindingDoc | null> {
  */
 export async function verifyBindingDoc(
   doc: BindingDoc,
-  opts?: { podRoot?: string; expectedController?: string }
+  opts?: { podRoot?: string; expectedController?: string },
 ): Promise<VerifyResult> {
   const core = await (await getPlatform()).crypto.getCore();
   let ok: boolean;
@@ -191,7 +191,7 @@ export async function verifyBindingDoc(
 /** Convenience: read + verify in one call. */
 export async function readAndVerify(
   podRoot: string,
-  expectedController?: string
+  expectedController?: string,
 ): Promise<{ doc: BindingDoc | null; result: VerifyResult }> {
   const doc = await readBinding(podRoot);
   if (!doc) return { doc: null, result: { ok: false, reason: "no binding found" } };

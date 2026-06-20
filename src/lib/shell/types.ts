@@ -207,11 +207,7 @@ export interface ShellContextValue {
  * The workspace-wide view is the union of these, computed under the requester's
  * own credentials (no-access projects simply don't resolve).
  */
-export function appZone(
-  podRoot: string,
-  appKey: string,
-  project?: Project | null
-): string {
+export function appZone(podRoot: string, appKey: string, project?: Project | null): string {
   const base = podRoot.endsWith("/") ? podRoot : podRoot + "/";
   if (project) return `${base}projects/${project.id}/apps/${appKey}/`;
   return `${base}apps/${appKey}/`;

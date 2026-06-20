@@ -19,7 +19,7 @@ export const DEFAULT_CLEAR_MS = 30_000;
 
 export async function copyWithAutoClear(
   text: string,
-  ms: number = DEFAULT_CLEAR_MS
+  ms: number = DEFAULT_CLEAR_MS,
 ): Promise<void> {
   await navigator.clipboard.writeText(text);
 

@@ -80,7 +80,13 @@ export default function VaultGlanceWidget() {
   const hoverBg = dark ? "#141417" : "#fafafa";
 
   const label =
-    count === null ? "…" : count === 0 ? "Vault is empty" : count === 1 ? "item secured" : "items secured";
+    count === null
+      ? "…"
+      : count === 0
+        ? "Vault is empty"
+        : count === 1
+          ? "item secured"
+          : "items secured";
 
   return (
     <div

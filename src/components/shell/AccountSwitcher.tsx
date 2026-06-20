@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   Avatar,
   AvatarFallback,
@@ -14,14 +12,13 @@ import {
   DropdownMenuTrigger,
   useMindTheme,
 } from "@mind-studio/ui";
-import { useShell } from "@/lib/shell/context";
-import { getView, subscribe } from "@/lib/identity/wallet";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { enterPassport, logoutPassport } from "@/lib/identity/passport-login";
-import {
-  getActivePassportSession,
-  subscribePassportSession,
-} from "@/lib/solid/passport-session";
 import type { Passport, WalletView } from "@/lib/identity/types";
+import { getView, subscribe } from "@/lib/identity/wallet";
+import { useShell } from "@/lib/shell/context";
+import { getActivePassportSession, subscribePassportSession } from "@/lib/solid/passport-session";
 
 /**
  * The account switcher pinned bottom-left under the rail (wireframe "🐔 S.
@@ -53,7 +50,7 @@ export function AccountSwitcher({ variant = "bar" }: { variant?: "bar" | "compac
 
   // Which passport (if any) we're currently acting AS.
   const [activePassportId, setActivePassportId] = useState<string | null>(
-    () => getActivePassportSession()?.passportId ?? null
+    () => getActivePassportSession()?.passportId ?? null,
   );
   useEffect(() => {
     const sync = () => setActivePassportId(getActivePassportSession()?.passportId ?? null);
@@ -94,7 +91,7 @@ export function AccountSwitcher({ variant = "bar" }: { variant?: "bar" | "compac
   const labelByWebId = new Map(
     (wallet.passports ?? [])
       .filter((p) => p.label && !p.workspace)
-      .map((p) => [p.webId, p.label as string])
+      .map((p) => [p.webId, p.label as string]),
   );
   const friendlyName = (a: (typeof others)[number]) =>
     labelByWebId.get(a.webId) ?? (a.displayName ? prettySlug(a.displayName) : hostOf(a.webId));
@@ -167,10 +164,7 @@ export function AccountSwitcher({ variant = "bar" }: { variant?: "bar" | "compac
               {passports.map((p) => {
                 const isActive = p.id === activePassportId;
                 return (
-                  <DropdownMenuItem
-                    key={p.id}
-                    onClick={() => void switchToPassport(p)}
-                  >
+                  <DropdownMenuItem key={p.id} onClick={() => void switchToPassport(p)}>
                     <span className="flex w-full items-center gap-2">
                       <span className="truncate">🪪 {p.label ?? hostOf(p.webId)}</span>
                       {isActive && (

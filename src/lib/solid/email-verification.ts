@@ -47,7 +47,7 @@ export async function serverRequiresEmailVerification(server?: string): Promise<
       c?.password?.verify ||
         c?.password?.confirm ||
         c?.account?.emailVerification ||
-        c?.account?.verifyEmail
+        c?.account?.verifyEmail,
     );
   } catch {
     return false;

@@ -20,8 +20,8 @@
  * import — so it stays unit-testable under `tsx` and carries no runtime weight.
  */
 
+import { type VerificationState, verificationState } from "./email";
 import type { Passport } from "./types";
-import { verificationState, type VerificationState } from "./email";
 
 /** A viewable provider login, projected from a sealed `password`-kind passport. */
 export interface ProviderAccount {

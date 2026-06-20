@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getView, subscribe } from "@/lib/identity/wallet";
 import type { WalletView } from "@/lib/identity/types";
+import { getView, subscribe } from "@/lib/identity/wallet";
 
 /**
  * Subscribe a component to the process-wide wallet singleton. Re-renders on every

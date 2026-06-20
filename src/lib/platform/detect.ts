@@ -25,8 +25,7 @@ declare global {
 export function isNative(): boolean {
   if (typeof window === "undefined") return false;
   return (
-    typeof window.__TAURI_INTERNALS__ !== "undefined" ||
-    typeof window.__TAURI__ !== "undefined"
+    typeof window.__TAURI_INTERNALS__ !== "undefined" || typeof window.__TAURI__ !== "undefined"
   );
 }
 

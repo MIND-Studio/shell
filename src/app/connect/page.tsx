@@ -8,8 +8,7 @@ const ISSUER =
   process.env.NEXT_PUBLIC_SOLID_ISSUER ??
   process.env.NEXT_PUBLIC_POD_BASE_URL ??
   "https://pods.mindpods.org/";
-const IS_LOCAL_ISSUER =
-  ISSUER.includes("localhost") || ISSUER.includes("127.0.0.1");
+const IS_LOCAL_ISSUER = ISSUER.includes("localhost") || ISSUER.includes("127.0.0.1");
 
 export default function ConnectPage() {
   return (
@@ -21,8 +20,8 @@ export default function ConnectPage() {
         Sign in once. Everything lives in your pod.
       </h1>
       <p className="mt-4 text-muted-foreground">
-        One surface wraps your identity: switch workspaces, projects and apps —
-        starting with Vault, a password manager whose secrets only you can read.
+        One surface wraps your identity: switch workspaces, projects and apps — starting with Vault,
+        a password manager whose secrets only you can read.
       </p>
       <PrototypeWarning className="mt-8" />
       <div className="mt-6">
@@ -33,9 +32,7 @@ export default function ConnectPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             Dev shortcut
           </p>
-          <p className="mt-2">
-            The local CSS instance on port 3101 has two pre-seeded accounts:
-          </p>
+          <p className="mt-2">The local CSS instance on port 3101 has two pre-seeded accounts:</p>
           <ul className="mt-2 space-y-1 font-mono text-xs">
             <li>alice@mind-shell.local · dev-only-do-not-use-in-prod</li>
             <li>bob@mind-shell.local · dev-only-do-not-use-in-prod</li>

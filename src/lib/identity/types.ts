@@ -14,11 +14,7 @@
  *     blob only — never written to a pod or localStorage in the clear).
  */
 
-import type {
-  IdentityKeystore,
-  VaultBootstrap,
-  SealedItem,
-} from "@/lib/vault/crypto-contract";
+import type { IdentityKeystore, SealedItem, VaultBootstrap } from "@/lib/vault/crypto-contract";
 
 /** The portable master identity (PRD-DID §2.4 — one master DID for v0). */
 export interface MasterIdentity {

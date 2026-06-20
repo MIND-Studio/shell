@@ -2,9 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useShell } from "@/lib/shell/context";
-import { IframeHost } from "./IframeHost";
-import { appZone } from "@/lib/shell/types";
 import type { HostedApp, WidgetDecl, WidgetSize } from "@/lib/shell/types";
+import { appZone } from "@/lib/shell/types";
+import { IframeHost } from "./IframeHost";
 
 /**
  * One Home tile (PRD-DASHBOARD §5/§6): an app's widget hosted in a sandboxed
@@ -106,14 +106,11 @@ export function WidgetTile({
       embed: "iframe",
       trust: widget.trust ?? "community",
     }),
-    [app.key, widget.id, widget.label, widget.icon, widget.url, widget.trust]
+    [app.key, widget.id, widget.label, widget.icon, widget.url, widget.trust],
   );
 
   const cap = maxHeight(widget.maxSize ?? size);
-  const bodyHeight = Math.max(
-    MIN_HEIGHT,
-    Math.min(height ?? defaultHeight(size), cap)
-  );
+  const bodyHeight = Math.max(MIN_HEIGHT, Math.min(height ?? defaultHeight(size), cap));
   const accent = accentFor(app.key);
 
   return (

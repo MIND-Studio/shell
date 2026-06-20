@@ -18,26 +18,26 @@
 
 import type { ISessionInfo } from "@inrupt/solid-client-authn-browser";
 import type {
-  KdfParams,
-  VaultBootstrap,
-  SealedItem,
-  PwGenOptions,
-  HibpPrefix,
-  SessionHandle,
   CreatedIdentity,
-  UnlockedIdentity,
+  HibpPrefix,
   IdentityHandle,
+  KdfParams,
+  PwGenOptions,
+  SealedItem,
+  SessionHandle,
+  UnlockedIdentity,
+  VaultBootstrap,
 } from "../vault/crypto-contract";
 import type {
+  AsyncCryptoCore,
+  AutofillIndexEntry,
   Platform,
   PlatformAuth,
   PlatformAutofill,
   PlatformBiometric,
   PlatformCrypto,
-  PlatformStorage,
   PlatformPod,
-  AutofillIndexEntry,
-  AsyncCryptoCore,
+  PlatformStorage,
 } from "./types";
 
 // Tauri command + event names — the single source of truth for the JS↔Rust wire.
@@ -219,16 +219,10 @@ const auth: PlatformAuth = {
  * — identical to the wasm FFI, just async because it's a process hop.
  */
 const nativeCore: AsyncCryptoCore = {
-  calibrateKdf: (targetMs: number) =>
-    invokeCmd<KdfParams>(CMD.calibrateKdf, { targetMs }),
+  calibrateKdf: (targetMs: number) => invokeCmd<KdfParams>(CMD.calibrateKdf, { targetMs }),
   createVault: (masterPassword: string, params: KdfParams) =>
     invokeCmd<VaultBootstrap>(CMD.createVault, { masterPassword, params }),
-  unlock: (
-    masterPassword: string,
-    saltB64: string,
-    params: KdfParams,
-    wrappedDataKeyB64: string
-  ) =>
+  unlock: (masterPassword: string, saltB64: string, params: KdfParams, wrappedDataKeyB64: string) =>
     invokeCmd<SessionHandle>(CMD.unlock, {
       masterPassword,
       saltB64,
@@ -236,42 +230,27 @@ const nativeCore: AsyncCryptoCore = {
       wrappedDataKeyB64,
     }),
   lock: (handle: SessionHandle) => invokeCmd<void>(CMD.lock, { handle }),
-  encryptItem: (
-    handle: SessionHandle,
-    itemId: string,
-    version: number,
-    plaintextJson: string
-  ) =>
+  encryptItem: (handle: SessionHandle, itemId: string, version: number, plaintextJson: string) =>
     invokeCmd<SealedItem>(CMD.encryptItem, {
       handle,
       itemId,
       version,
       plaintextJson,
     }),
-  decryptItem: (
-    handle: SessionHandle,
-    itemId: string,
-    version: number,
-    sealed: SealedItem
-  ) => invokeCmd<string>(CMD.decryptItem, { handle, itemId, version, sealed }),
-  changePassword: (
-    handle: SessionHandle,
-    newPassword: string,
-    params: KdfParams
-  ) =>
+  decryptItem: (handle: SessionHandle, itemId: string, version: number, sealed: SealedItem) =>
+    invokeCmd<string>(CMD.decryptItem, { handle, itemId, version, sealed }),
+  changePassword: (handle: SessionHandle, newPassword: string, params: KdfParams) =>
     invokeCmd<VaultBootstrap>(CMD.changePassword, {
       handle,
       newPassword,
       params,
     }),
-  generatePassword: (opts: PwGenOptions) =>
-    invokeCmd<string>(CMD.generatePassword, { opts }),
+  generatePassword: (opts: PwGenOptions) => invokeCmd<string>(CMD.generatePassword, { opts }),
   generatePassphrase: (words: number, separator: string) =>
     invokeCmd<string>(CMD.generatePassphrase, { words, separator }),
   totpAt: (secretB32: string, unixSeconds: number, period: number, digits: number) =>
     invokeCmd<string>(CMD.totpAt, { secretB32, unixSeconds, period, digits }),
-  hibpPrefix: (password: string) =>
-    invokeCmd<HibpPrefix>(CMD.hibpPrefix, { password }),
+  hibpPrefix: (password: string) => invokeCmd<HibpPrefix>(CMD.hibpPrefix, { password }),
 
   // ---- identity / DID layer (PRD-DID §5.9) ----
   identityCreate: (masterPassword: string, params: KdfParams) =>
@@ -280,7 +259,7 @@ const nativeCore: AsyncCryptoCore = {
     masterPassword: string,
     saltB64: string,
     params: KdfParams,
-    wrappedSeedB64: string
+    wrappedSeedB64: string,
   ) =>
     invokeCmd<UnlockedIdentity>(CMD.identityUnlock, {
       masterPassword,
@@ -290,14 +269,12 @@ const nativeCore: AsyncCryptoCore = {
     }),
   identityFromSeed: (seedB64: string) =>
     invokeCmd<IdentityHandle>(CMD.identityFromSeed, { seedB64 }),
-  masterDid: (handle: IdentityHandle) =>
-    invokeCmd<string>(CMD.masterDid, { handle }),
+  masterDid: (handle: IdentityHandle) => invokeCmd<string>(CMD.masterDid, { handle }),
   signDetached: (handle: IdentityHandle, payload: string) =>
     invokeCmd<string>(CMD.signDetached, { handle, payload }),
   verifyBinding: (did: string, payload: string, signatureB64: string) =>
     invokeCmd<boolean>(CMD.verifyBinding, { did, payload, signatureB64 }),
-  identityLock: (handle: IdentityHandle) =>
-    invokeCmd<void>(CMD.identityLock, { handle }),
+  identityLock: (handle: IdentityHandle) => invokeCmd<void>(CMD.identityLock, { handle }),
 };
 
 const crypto: PlatformCrypto = {
@@ -420,14 +397,15 @@ async function encodeBodyB64(body: BodyInit | null | undefined): Promise<string 
 }
 
 const podFetch: typeof fetch = async (input, init) => {
-  const request =
-    input instanceof Request ? input : new Request(input as RequestInfo | URL, init);
+  const request = input instanceof Request ? input : new Request(input as RequestInfo | URL, init);
   const url = request.url;
   const method = (init?.method ?? request.method ?? "GET").toUpperCase();
 
   // Headers: prefer the Request's merged headers; fall back to init.
   const headers = headerPairs(
-    input instanceof Request && !init?.headers ? request.headers : init?.headers ?? request.headers
+    input instanceof Request && !init?.headers
+      ? request.headers
+      : (init?.headers ?? request.headers),
   );
 
   // Body (base64): only bodyless-exempt verbs carry one. init first, else Request.

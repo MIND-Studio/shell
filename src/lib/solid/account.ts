@@ -1,7 +1,7 @@
 "use client";
 
+import { type DidSigner, linkDidToAccount } from "./did-account";
 import { storedIssuer } from "./session";
-import { linkDidToAccount, type DidSigner } from "./did-account";
 
 /**
  * The CSS **account-session** plane (PRD-IDENTITY.md §4.1 mechanism B, used only
@@ -146,7 +146,7 @@ export async function createPod(opts: {
   }
   if (!createRes.ok) throw new Error(`Pod creation failed (${createRes.status}).`);
   const created = await json<{ pod?: string; webId?: string }>(createRes).catch(
-    () => ({} as { pod?: string; webId?: string })
+    () => ({}) as { pod?: string; webId?: string },
   );
 
   const podRoot = created.pod ?? `${root}${slug}/`;
@@ -252,7 +252,7 @@ export async function createPassportAccount(opts: {
     throw new Error(
       createRes.status === 403 || createRes.status === 404
         ? "This server doesn't allow creating new accounts."
-        : `Account creation failed (${createRes.status}).`
+        : `Account creation failed (${createRes.status}).`,
     );
   }
   const { authorization: token } = await json<{ authorization?: string }>(createRes);
@@ -279,7 +279,7 @@ export async function createPassportAccount(opts: {
     throw new Error(
       pwRes.status === 400 || pwRes.status === 409
         ? "That account email is already taken — try again."
-        : `Setting the account password failed (${pwRes.status}).`
+        : `Setting the account password failed (${pwRes.status}).`,
     );
   }
 
@@ -399,7 +399,7 @@ export async function provisionWorkspaceAccount(opts: {
     throw new Error(
       createRes.status === 401 || createRes.status === 403 || createRes.status === 404
         ? "This server doesn't allow creating new accounts."
-        : `Account creation failed (${createRes.status}).`
+        : `Account creation failed (${createRes.status}).`,
     );
   }
   const { authorization: token } = await json<{ authorization?: string }>(createRes);
@@ -425,7 +425,7 @@ export async function provisionWorkspaceAccount(opts: {
     throw new Error(
       pwRes.status === 400 || pwRes.status === 409
         ? "Couldn't set up the workspace account — try again."
-        : `Setting the account password failed (${pwRes.status}).`
+        : `Setting the account password failed (${pwRes.status}).`,
     );
   }
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@mind-studio/ui";
-import { consumeReturnTo } from "@/lib/solid/auth";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { getPlatform } from "@/lib/platform";
+import { consumeReturnTo } from "@/lib/solid/auth";
 
 export default function LoginCallbackPage() {
   const router = useRouter();

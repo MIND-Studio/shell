@@ -27,25 +27,25 @@
  * passport key is sealed in the encrypted registry (AGENTS.md rules #1, #5).
  */
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button, Input, Label } from "@mind-studio/ui";
-import { rememberIssuer, storedIssuer } from "@/lib/solid/session";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { enterPassport, loginWithDidSession } from "@/lib/identity/passport-login";
+import { provisionPassport } from "@/lib/identity/provision";
+import { LAST_ACTIVE_PASSPORT_KEY, type Passport } from "@/lib/identity/types";
 import {
-  getView,
+  addPassport,
+  createWallet,
   getDid,
   getPassports,
-  createWallet,
-  unlockWallet,
-  addPassport,
+  getView,
   newPassportId,
+  unlockWallet,
   sign as walletSign,
 } from "@/lib/identity/wallet";
-import { provisionPassport } from "@/lib/identity/provision";
-import { writeProfileName } from "@/lib/solid/profile";
-import { enterPassport, loginWithDidSession } from "@/lib/identity/passport-login";
 import { serverSupportsDid } from "@/lib/solid/did-account";
-import { LAST_ACTIVE_PASSPORT_KEY, type Passport } from "@/lib/identity/types";
+import { writeProfileName } from "@/lib/solid/profile";
+import { rememberIssuer, storedIssuer } from "@/lib/solid/session";
 
 type WalletStatus = "unknown" | "none" | "locked" | "unlocked";
 
@@ -91,7 +91,7 @@ export default function WalletOnboarding() {
           await unlockWallet(pw);
         } catch {
           setError(
-            "This device already holds an identity wallet, and that master password doesn't match it. Unlock your existing identity instead, or sign in with a different account below."
+            "This device already holds an identity wallet, and that master password doesn't match it. Unlock your existing identity instead, or sign in with a different account below.",
           );
           setBusy("");
           return;
@@ -171,9 +171,7 @@ export default function WalletOnboarding() {
       // its session: client-credentials (re-mint a token) or DID (re-sign a
       // challenge — solid-server-rs). Manual/password logins can't.
       const lastId =
-        typeof window !== "undefined"
-          ? localStorage.getItem(LAST_ACTIVE_PASSPORT_KEY)
-          : null;
+        typeof window !== "undefined" ? localStorage.getItem(LAST_ACTIVE_PASSPORT_KEY) : null;
       const canResume = (p: Passport) =>
         p.creds?.kind === "client-credentials" || p.creds?.kind === "did";
       const resumable =
@@ -209,8 +207,8 @@ export default function WalletOnboarding() {
         <Eyebrow>Welcome back</Eyebrow>
         <h2 className="mt-1 text-lg font-semibold">Unlock your identity</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Your master key lives on this device. Enter your master password to
-          continue into your pod — no server password needed.
+          Your master key lives on this device. Enter your master password to continue into your pod
+          — no server password needed.
         </p>
         {/* A real <form> so Enter submits and password managers can fill. */}
         <form
@@ -252,8 +250,8 @@ export default function WalletOnboarding() {
       <Eyebrow>New to Mind</Eyebrow>
       <h2 className="mt-1 text-lg font-semibold">Create a new identity</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        We generate your keys on this device and create your first pod — with a
-        strong password the shell stores for you (you never type or see one).
+        We generate your keys on this device and create your first pod — with a strong password the
+        shell stores for you (you never type or see one).
       </p>
       {/* A real <form> so Enter submits and password managers can fill. */}
       <form
@@ -303,9 +301,9 @@ export default function WalletOnboarding() {
 
         {status === "locked" && (
           <p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-[11px] leading-snug text-amber-700 dark:text-amber-200">
-            This device already holds an identity wallet (one per device for
-            now). Your master password must match it — this form finishes its
-            setup or resumes it, rather than starting over.
+            This device already holds an identity wallet (one per device for now). Your master
+            password must match it — this form finishes its setup or resumes it, rather than
+            starting over.
           </p>
         )}
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -313,9 +311,8 @@ export default function WalletOnboarding() {
           {busy === "create" ? "Creating your identity & pod…" : "Create my identity"}
         </Button>
         <p className="rounded-md bg-muted/50 p-2 text-[11px] leading-snug text-muted-foreground">
-          Your master password is the one thing to remember — it unlocks this
-          identity and every pod the shell creates for you. It never leaves your
-          device.
+          Your master password is the one thing to remember — it unlocks this identity and every pod
+          the shell creates for you. It never leaves your device.
         </p>
         {status === "locked" && (
           <button

@@ -20,7 +20,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createWidgetClient, type WidgetClient } from "@/lib/shell/bridge-client";
-import type { BridgeTheme, BridgeEntry } from "@/lib/shell/bridge-protocol";
+import type { BridgeEntry, BridgeTheme } from "@/lib/shell/bridge-protocol";
 
 type Phase = "connecting" | "ready" | "error";
 
@@ -82,8 +82,7 @@ export default function RecentWidget() {
             await client.readdir("../");
             if (!disposed) setScopeEnforced(false); // reached the pod → NOT enforced
           } catch (e) {
-            if (!disposed)
-              setScopeEnforced(Boolean((e as { denied?: boolean })?.denied));
+            if (!disposed) setScopeEnforced(Boolean((e as { denied?: boolean })?.denied));
           }
         }
 
@@ -133,9 +132,7 @@ export default function RecentWidget() {
     >
       {phase === "connecting" && <p style={{ color: sub }}>Connecting…</p>}
 
-      {phase === "error" && (
-        <p style={{ color: "#ef4444" }}>Couldn’t reach the shell bridge.</p>
-      )}
+      {phase === "error" && <p style={{ color: "#ef4444" }}>Couldn’t reach the shell bridge.</p>}
 
       {phase === "ready" && (
         <>
@@ -148,9 +145,7 @@ export default function RecentWidget() {
                     title="Open in the app"
                     onClick={() => clientRef.current?.open(e.url)}
                     onMouseEnter={() => setHover(e.url)}
-                    onMouseLeave={() =>
-                      setHover((h) => (h === e.url ? null : h))
-                    }
+                    onMouseLeave={() => setHover((h) => (h === e.url ? null : h))}
                     style={{
                       display: "flex",
                       gap: 8,
@@ -168,9 +163,7 @@ export default function RecentWidget() {
                     }}
                   >
                     <span aria-hidden>{e.kind === "container" ? "📁" : "📄"}</span>
-                    <span
-                      style={{ overflow: "hidden", textOverflow: "ellipsis" }}
-                    >
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
                       {displayName(e.name)}
                     </span>
                   </button>
@@ -178,9 +171,7 @@ export default function RecentWidget() {
               ))}
             </ul>
           ) : (
-            <p style={{ color: sub, margin: 0 }}>
-              {note || "Nothing here yet."}
-            </p>
+            <p style={{ color: sub, margin: 0 }}>{note || "Nothing here yet."}</p>
           )}
 
           {scopeEnforced !== null && (

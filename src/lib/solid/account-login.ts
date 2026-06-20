@@ -50,7 +50,7 @@ function acctPost(token: string) {
 export async function loginToAccount(
   email: string,
   password: string,
-  server?: string
+  server?: string,
 ): Promise<string> {
   const root = serverRoot(server);
   const accountIndex = `${root}.account/`;
@@ -111,7 +111,7 @@ export async function mintClientCredentials(
   token: string,
   webId: string,
   server?: string,
-  name = "mind-shell"
+  name = "mind-shell",
 ): Promise<{ id: string; secret: string }> {
   const root = serverRoot(server);
   const accountIndex = `${root}.account/`;

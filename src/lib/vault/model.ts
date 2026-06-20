@@ -14,18 +14,18 @@
  * Nothing else — no plaintext password/note/totp ever reaches the pod or disk.
  */
 
+import type { AsyncCryptoCore } from "@/lib/platform";
 import {
   exists,
+  mkdir,
   readdir,
   readFileBlob,
   readFileText,
+  unlink,
   writeFileBlob,
   writeFileText,
-  mkdir,
-  unlink,
 } from "@/lib/solid/pod-fs";
 import type { SealedItem, SessionHandle, VaultBootstrap } from "./crypto-contract";
-import type { AsyncCryptoCore } from "@/lib/platform";
 
 export const VAULT_SCHEMA_VERSION = 1;
 
@@ -323,7 +323,7 @@ export async function createVaultOnPod(
   core: AsyncCryptoCore,
   zone: string,
   podRoot: string,
-  masterPw: string
+  masterPw: string,
 ): Promise<LoadedVault> {
   const params = await core.calibrateKdf(750);
   const bootstrap = await core.createVault(masterPw, params);
@@ -354,7 +354,7 @@ export async function saveItem(
   handle: SessionHandle,
   vault: LoadedVault,
   meta: VaultItemMeta,
-  secret: VaultItemSecret
+  secret: VaultItemSecret,
 ): Promise<VaultItemMeta> {
   const nextVersion = meta.version + 1;
   const saved: VaultItemMeta = {
@@ -378,7 +378,7 @@ export async function loadItemSecret(
   core: AsyncCryptoCore,
   zone: string,
   handle: SessionHandle,
-  meta: VaultItemMeta
+  meta: VaultItemMeta,
 ): Promise<VaultItemSecret> {
   const blob = await readFileBlob(itemUrl(zone, meta.id));
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -388,11 +388,7 @@ export async function loadItemSecret(
 }
 
 /** Delete an item: remove the .enc blob and drop it from the index. */
-export async function deleteItem(
-  zone: string,
-  vault: LoadedVault,
-  id: string
-): Promise<void> {
+export async function deleteItem(zone: string, vault: LoadedVault, id: string): Promise<void> {
   try {
     await unlink(itemUrl(zone, id));
   } catch {
@@ -412,7 +408,7 @@ export async function changeMasterPassword(
   zone: string,
   handle: SessionHandle,
   vault: LoadedVault,
-  newPw: string
+  newPw: string,
 ): Promise<LoadedVault> {
   const params = await core.calibrateKdf(750);
   const bootstrap = await core.changePassword(handle, newPw, params);

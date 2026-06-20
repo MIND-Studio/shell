@@ -12,31 +12,25 @@
  * unsupported so the UI falls back to the master password / hides OS autofill.
  */
 
+import { login as browserLogin, type ISessionInfo } from "@inrupt/solid-client-authn-browser";
 import {
-  login as browserLogin,
-  type ISessionInfo,
-} from "@inrupt/solid-client-authn-browser";
-import {
-  ensureSession as solidEnsureSession,
   completeLoginRedirect,
   rememberReturnToDefault,
+  ensureSession as solidEnsureSession,
 } from "../solid/auth";
-import { session, rememberIssuer } from "../solid/session";
-import {
-  getActivePassportSession,
-  clearActivePassportSession,
-} from "../solid/passport-session";
+import { clearActivePassportSession, getActivePassportSession } from "../solid/passport-session";
+import { rememberIssuer, session } from "../solid/session";
 import { getCryptoCore } from "../vault/core";
 import type {
+  AsyncCryptoCore,
+  AutofillIndexEntry,
   Platform,
   PlatformAuth,
   PlatformAutofill,
   PlatformBiometric,
   PlatformCrypto,
-  PlatformStorage,
   PlatformPod,
-  AutofillIndexEntry,
-  AsyncCryptoCore,
+  PlatformStorage,
 } from "./types";
 
 const auth: PlatformAuth = {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useMindTheme } from "@mind-studio/ui";
-import { useShell } from "@/lib/shell/context";
-import { createBridge, type Bridge } from "@/lib/shell/bridge";
+import { useEffect, useRef, useState } from "react";
+import { type Bridge, createBridge } from "@/lib/shell/bridge";
 import type { BridgeTheme } from "@/lib/shell/bridge-protocol";
+import { useShell } from "@/lib/shell/context";
 import type { HostedApp } from "@/lib/shell/types";
 
 /**

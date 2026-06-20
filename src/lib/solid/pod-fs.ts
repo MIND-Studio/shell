@@ -1,18 +1,18 @@
 "use client";
 
 import {
-  getSolidDataset,
-  getContainedResourceUrlAll,
-  getThing,
-  getDatetime,
-  getInteger,
-  deleteFile,
-  deleteContainer,
-  overwriteFile,
-  getFile,
   createContainerAt,
-  getSourceUrl,
+  deleteContainer,
+  deleteFile,
+  getContainedResourceUrlAll,
   getContentType,
+  getDatetime,
+  getFile,
+  getInteger,
+  getSolidDataset,
+  getSourceUrl,
+  getThing,
+  overwriteFile,
 } from "@inrupt/solid-client";
 import { getPlatform } from "@/lib/platform";
 
@@ -78,10 +78,10 @@ export async function readdir(containerUrl: string): Promise<PodEntry[]> {
       const isContainer = url.endsWith("/");
       const thing = getThing(dataset, url);
       const modified = thing
-        ? getDatetime(thing, "http://purl.org/dc/terms/modified") ?? undefined
+        ? (getDatetime(thing, "http://purl.org/dc/terms/modified") ?? undefined)
         : undefined;
       const size = thing
-        ? getInteger(thing, "http://www.w3.org/ns/posix/stat#size") ?? undefined
+        ? (getInteger(thing, "http://www.w3.org/ns/posix/stat#size") ?? undefined)
         : undefined;
       return {
         url,
@@ -103,8 +103,9 @@ export async function exists(url: string): Promise<boolean> {
     await getSolidDataset(url, { fetch: await noCacheFetch() });
     return true;
   } catch (e: unknown) {
-    const status = (e as { statusCode?: number; response?: { status?: number } })
-      ?.statusCode ?? (e as { response?: { status?: number } })?.response?.status;
+    const status =
+      (e as { statusCode?: number; response?: { status?: number } })?.statusCode ??
+      (e as { response?: { status?: number } })?.response?.status;
     if (status === 404) return false;
     // 401/403 etc. — surface to caller.
     throw e;
@@ -123,7 +124,7 @@ export async function readFileBlob(url: string): Promise<Blob> {
 export async function writeFileText(
   url: string,
   contents: string,
-  contentType = "text/plain"
+  contentType = "text/plain",
 ): Promise<void> {
   await overwriteFile(url, new Blob([contents], { type: contentType }), {
     contentType,
@@ -134,7 +135,7 @@ export async function writeFileText(
 export async function writeFileBlob(
   url: string,
   blob: Blob,
-  contentType?: string
+  contentType?: string,
 ): Promise<string> {
   const type = contentType ?? blob.type ?? "application/octet-stream";
   const result = await overwriteFile(url, blob, {
@@ -165,10 +166,7 @@ export async function mkdir(url: string): Promise<string> {
  * in JS — the cause of console noise on a "create the zone" path). `container`
  * should be under `podRoot`; falls back to an existence check otherwise.
  */
-export async function ensureContainerChain(
-  container: string,
-  podRoot: string
-): Promise<void> {
+export async function ensureContainerChain(container: string, podRoot: string): Promise<void> {
   const base = ensureSlash(podRoot);
   if (!container.startsWith(base)) {
     if (!(await exists(container))) await mkdir(container);
@@ -201,7 +199,7 @@ export async function ensureContainerChain(
  */
 export async function resourceExistsByListing(
   resourceUrl: string,
-  podRoot: string
+  podRoot: string,
 ): Promise<boolean> {
   const base = ensureSlash(podRoot);
   if (!resourceUrl.startsWith(base)) return exists(resourceUrl);

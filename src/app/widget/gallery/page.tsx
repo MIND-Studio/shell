@@ -52,7 +52,7 @@ export default function GalleryWidget() {
         } catch {
           return null;
         }
-      })
+      }),
     );
     setThumbs(loaded.filter((t): t is Thumb => t !== null));
   }, []);

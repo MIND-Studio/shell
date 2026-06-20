@@ -60,7 +60,7 @@ export default function PeopleWidget() {
         } catch {
           return { name: f.name, fn: "Unnamed" } as Person;
         }
-      })
+      }),
     );
     loaded.sort((a, b) => a.fn.localeCompare(b.fn));
     setPeople(loaded);

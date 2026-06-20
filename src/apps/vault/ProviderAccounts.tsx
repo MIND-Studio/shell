@@ -15,25 +15,22 @@
  * carries the reusable-login warning (PRD-PROVIDER-ACCOUNTS §3 tradeoff).
  */
 
-import { useEffect, useState } from "react";
 import { Button, Input, Separator } from "@mind-studio/ui";
+import { useEffect, useState } from "react";
 import {
-  getView,
-  getPassports,
-  subscribe,
-  markEmailVerified,
-  addManualProviderAccount,
-} from "@/lib/identity/wallet";
-import {
-  projectProviderAccounts,
-  type ProviderAccount,
-} from "@/lib/identity/provider-accounts";
-import {
-  validateManualAccount,
   isManualAccountValid,
   type ManualAccountDraft,
+  validateManualAccount,
 } from "@/lib/identity/manual-account";
+import { type ProviderAccount, projectProviderAccounts } from "@/lib/identity/provider-accounts";
 import { planProviderEntry } from "@/lib/identity/provider-entry";
+import {
+  addManualProviderAccount,
+  getPassports,
+  getView,
+  markEmailVerified,
+  subscribe,
+} from "@/lib/identity/wallet";
 import { brokeredHandoffAvailable } from "@/lib/shell/brokered-bridge";
 import { useShell } from "@/lib/shell/context";
 import { copyWithAutoClear } from "@/lib/vault/clipboard";
@@ -70,9 +67,7 @@ export function ProviderAccounts() {
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
           {accounts.length}
         </span>
-        <span className="ml-auto text-xs text-muted-foreground">
-          logins for your other pods
-        </span>
+        <span className="ml-auto text-xs text-muted-foreground">logins for your other pods</span>
       </button>
 
       {open && (
@@ -86,8 +81,8 @@ export function ProviderAccounts() {
           ))}
           {accounts.length === 0 && (
             <p className="rounded-md border border-dashed border-border/70 px-3 py-2 text-xs text-muted-foreground">
-              No saved logins yet. Add one for a provider you registered yourself
-              (e.g. Inrupt PodSpaces) to keep its login here.
+              No saved logins yet. Add one for a provider you registered yourself (e.g. Inrupt
+              PodSpaces) to keep its login here.
             </p>
           )}
           <AddLoginForm />
@@ -147,14 +142,11 @@ function AddLoginForm() {
   };
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="space-y-2 rounded-md border border-border/70 p-3"
-    >
+    <form onSubmit={onSubmit} className="space-y-2 rounded-md border border-border/70 p-3">
       <p className="text-xs font-medium">Add a provider login</p>
       <p className="text-xs text-muted-foreground">
-        For a pod you registered yourself. The password is saved to your Vault —
-        the shell never signs you in automatically with it.
+        For a pod you registered yourself. The password is saved to your Vault — the shell never
+        signs you in automatically with it.
       </p>
 
       <Field label="Name" error={touched ? errors.label : undefined}>
@@ -298,8 +290,8 @@ function AccountRow({ account }: { account: ProviderAccount }) {
       {account.pending && (
         <div className="mt-2 flex items-center gap-2 rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-600 dark:text-amber-400">
           <span className="min-w-0 flex-1">
-            Confirm this email at the provider, then mark it verified to re-enable
-            automatic sign-in.
+            Confirm this email at the provider, then mark it verified to re-enable automatic
+            sign-in.
           </span>
           <Button
             size="sm"
@@ -310,9 +302,7 @@ function AccountRow({ account }: { account: ProviderAccount }) {
               try {
                 await markEmailVerified(account.id);
               } catch (err) {
-                setVerifyError(
-                  err instanceof Error ? err.message : "Couldn't mark this verified."
-                );
+                setVerifyError(err instanceof Error ? err.message : "Couldn't mark this verified.");
               }
             }}
           >
@@ -320,9 +310,7 @@ function AccountRow({ account }: { account: ProviderAccount }) {
           </Button>
         </div>
       )}
-      {verifyError && (
-        <p className="mt-1 text-xs text-[color:var(--destructive)]">{verifyError}</p>
-      )}
+      {verifyError && <p className="mt-1 text-xs text-[color:var(--destructive)]">{verifyError}</p>}
 
       <Separator className="my-2" />
 

@@ -16,13 +16,13 @@
  */
 
 import {
-  readFileText,
-  writeFileText,
   ensureContainerChain,
+  readFileText,
   resourceExistsByListing,
+  writeFileText,
 } from "@/lib/solid/pod-fs";
-import { shellZone } from "./types";
 import type { HomeLayoutItem, WidgetSize } from "./types";
+import { shellZone } from "./types";
 
 const MIND_NS = "https://mind.dev/ns/v1#";
 
@@ -92,9 +92,7 @@ function parseHomeTtl(ttl: string): HomeLayoutItem[] {
  * (so the caller can fall back to a default Home). Never throws — any read error
  * resolves to `null` and Home renders its default.
  */
-export async function readHomeLayout(
-  podRoot: string
-): Promise<HomeLayoutItem[] | null> {
+export async function readHomeLayout(podRoot: string): Promise<HomeLayoutItem[] | null> {
   try {
     const url = homeTtlUrl(podRoot);
     if (!(await resourceExistsByListing(url, podRoot))) return null;
@@ -109,10 +107,7 @@ export async function readHomeLayout(
  * so a fresh pod stays console-clean. Re-numbers `order` from the array order so
  * the on-pod order is always canonical.
  */
-export async function writeHomeLayout(
-  podRoot: string,
-  items: HomeLayoutItem[]
-): Promise<void> {
+export async function writeHomeLayout(podRoot: string, items: HomeLayoutItem[]): Promise<void> {
   const normalized = items.map((it, i) => ({ ...it, order: i }));
   await ensureContainerChain(shellZone(podRoot), podRoot);
   await writeFileText(homeTtlUrl(podRoot), serializeHomeTtl(normalized), "text/turtle");

@@ -1,47 +1,36 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-} from "react";
 import { useRouter } from "next/navigation";
-import { getPlatform } from "@/lib/platform";
-import { readProfile, readPodRoot } from "@/lib/solid/profile";
-import { readdir, readFileText } from "@/lib/solid/pod-fs";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
-  listWorkspaceRefs,
+  addPassport,
+  getDid as getWalletDid,
+  getView as getWalletView,
+  newPassportId,
+  sign as walletSign,
+} from "@/lib/identity/wallet";
+import { getPlatform } from "@/lib/platform";
+import { provisionWorkspaceAccount } from "@/lib/solid/account";
+import { exists, readdir, readFileText } from "@/lib/solid/pod-fs";
+import { readPodRoot, readProfile } from "@/lib/solid/profile";
+import { trySilentResume } from "@/lib/solid/resume";
+import {
   addWorkspaceRef,
   ensureHomeRef,
   ensureSlash,
+  listWorkspaceRefs,
 } from "@/lib/solid/workspaces";
-import { exists } from "@/lib/solid/pod-fs";
-import { provisionWorkspaceAccount } from "@/lib/solid/account";
-import {
-  getView as getWalletView,
-  getDid as getWalletDid,
-  sign as walletSign,
-  addPassport,
-  newPassportId,
-} from "@/lib/identity/wallet";
-import {
-  listAccounts,
-  rememberAccount,
-} from "./accounts";
+import { listAccounts, rememberAccount } from "./accounts";
 import { readCatalog } from "./catalog";
-import { trySilentResume } from "@/lib/solid/resume";
 import type {
+  AccountIdentity,
+  HostedApp,
+  Project,
   ShellContextValue,
+  WidgetDecl,
   Workspace,
   WorkspaceRef,
   WorkspaceRole,
-  Project,
-  HostedApp,
-  WidgetDecl,
-  AccountIdentity,
 } from "./types";
 
 /**
@@ -360,8 +349,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
   // authoritative when present; otherwise the cached ref name, then the slug.
   const readWorkspaceName = useCallback(
     async (podRoot: string, fallback?: string): Promise<string> => {
-      const slug =
-        podRoot.replace(/\/$/, "").split("/").filter(Boolean).pop() ?? "Workspace";
+      const slug = podRoot.replace(/\/$/, "").split("/").filter(Boolean).pop() ?? "Workspace";
       try {
         const entries = await readdir(podRoot);
         if (entries.some((e) => e.name === "workspace.ttl")) {
@@ -374,7 +362,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       }
       return fallback ?? slug;
     },
-    []
+    [],
   );
 
   // Resolve the rail: read the per-identity Workspace index off the home pod,
@@ -412,70 +400,73 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
           podRoot: r.podRoot,
           name: await readWorkspaceName(r.podRoot, r.name),
           role: r.role,
-        }))
+        })),
       );
       setWorkspaces(resolved);
     },
-    [readWorkspaceName]
+    [readWorkspaceName],
   );
 
   // Load the projects + apps for the currently active workspace pod.
-  const loadActiveWorkspace = useCallback(async (podRoot: string) => {
-    setWorkspacePod(podRoot);
+  const loadActiveWorkspace = useCallback(
+    async (podRoot: string) => {
+      setWorkspacePod(podRoot);
 
-    // Projects under {podRoot}projects/. Gate on the pod-root listing so a pod
-    // without a projects/ container doesn't 404 (and log) on every switch.
-    try {
-      const rootEntries = await readdir(podRoot);
-      const hasProjects = rootEntries.some(
-        (x) => x.kind === "container" && x.name === "projects"
-      );
-      const found: Project[] = [];
-      if (hasProjects) {
-        const entries = await readdir(`${podRoot}projects/`);
-        for (const e of entries.filter((x) => x.kind === "container")) {
-          const id = e.name;
-          let pname = id;
-          try {
-            const ptl = await readFileText(`${e.url}project.ttl`);
-            const pm = ptl.match(/dct:title\s+"([^"]+)"/);
-            if (pm) pname = pm[1];
-          } catch {}
-          found.push({ id, url: e.url, name: pname });
+      // Projects under {podRoot}projects/. Gate on the pod-root listing so a pod
+      // without a projects/ container doesn't 404 (and log) on every switch.
+      try {
+        const rootEntries = await readdir(podRoot);
+        const hasProjects = rootEntries.some(
+          (x) => x.kind === "container" && x.name === "projects",
+        );
+        const found: Project[] = [];
+        if (hasProjects) {
+          const entries = await readdir(`${podRoot}projects/`);
+          for (const e of entries.filter((x) => x.kind === "container")) {
+            const id = e.name;
+            let pname = id;
+            try {
+              const ptl = await readFileText(`${e.url}project.ttl`);
+              const pm = ptl.match(/dct:title\s+"([^"]+)"/);
+              if (pm) pname = pm[1];
+            } catch {}
+            found.push({ id, url: e.url, name: pname });
+          }
         }
+        setProjects(found);
+      } catch {
+        setProjects([]);
       }
-      setProjects(found);
-    } catch {
-      setProjects([]);
-    }
 
-    // Apps: built-ins always (incl. Drive); PLUS pod-owned `embed:"iframe"` apps
-    // from the catalog (PRD-APPS §4) so the shell can HOST them in the app body,
-    // not just link out. Pure-link apps stay out of `apps` — the waffle still
-    // lists them. Non-fatal: a read failure keeps just the built-ins.
-    const builtins = builtinApps();
-    let merged = builtins;
-    try {
-      const catalog = await readCatalog(podRoot, authedFetch);
-      const hostable = catalog.filter(
-        (a) => a.embed === "iframe" && a.url && !builtins.some((b) => b.key === a.key)
-      );
-      merged = [...builtins, ...hostable];
-    } catch {
-      /* catalog unreadable — built-ins (incl. Drive) still stand */
-    }
-    setApps(merged);
-    // First load only: open the preferred default app (Drive). It's a built-in
-    // now, so it's always present; the guard only matters if the default key is
-    // overridden to something absent — then we stay on the Vault fallback.
-    if (!defaultApplied.current) {
-      defaultApplied.current = true;
-      const target = merged.some((a) => a.key === DEFAULT_APP_KEY)
-        ? DEFAULT_APP_KEY
-        : FALLBACK_APP_KEY;
-      if (merged.some((a) => a.key === target)) setActiveAppKey(target);
-    }
-  }, [authedFetch]);
+      // Apps: built-ins always (incl. Drive); PLUS pod-owned `embed:"iframe"` apps
+      // from the catalog (PRD-APPS §4) so the shell can HOST them in the app body,
+      // not just link out. Pure-link apps stay out of `apps` — the waffle still
+      // lists them. Non-fatal: a read failure keeps just the built-ins.
+      const builtins = builtinApps();
+      let merged = builtins;
+      try {
+        const catalog = await readCatalog(podRoot, authedFetch);
+        const hostable = catalog.filter(
+          (a) => a.embed === "iframe" && a.url && !builtins.some((b) => b.key === a.key),
+        );
+        merged = [...builtins, ...hostable];
+      } catch {
+        /* catalog unreadable — built-ins (incl. Drive) still stand */
+      }
+      setApps(merged);
+      // First load only: open the preferred default app (Drive). It's a built-in
+      // now, so it's always present; the guard only matters if the default key is
+      // overridden to something absent — then we stay on the Vault fallback.
+      if (!defaultApplied.current) {
+        defaultApplied.current = true;
+        const target = merged.some((a) => a.key === DEFAULT_APP_KEY)
+          ? DEFAULT_APP_KEY
+          : FALLBACK_APP_KEY;
+        if (merged.some((a) => a.key === target)) setActiveAppKey(target);
+      }
+    },
+    [authedFetch],
+  );
 
   const refresh = useCallback(async () => {
     const platform = await getPlatform();
@@ -527,7 +518,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
         await loadActiveWorkspace(target);
       })();
     },
-    [resolveWorkspaces, loadActiveWorkspace]
+    [resolveWorkspaces, loadActiveWorkspace],
   );
 
   // Join an existing pod as a Workspace (B3): probe access, persist a ref in the
@@ -536,9 +527,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
     async (podRoot: string, opts?: { role?: WorkspaceRole; name?: string }) => {
       const home = homePod.current;
       if (!home) throw new Error("No home pod available to register against.");
-      const normalized = podRoot.trim().endsWith("/")
-        ? podRoot.trim()
-        : podRoot.trim() + "/";
+      const normalized = podRoot.trim().endsWith("/") ? podRoot.trim() : podRoot.trim() + "/";
       // Validate it's a real http(s) URL before touching the index.
       let url: URL;
       try {
@@ -568,7 +557,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       // switchWorkspace re-resolves the rail (now including the new ref) + activates it.
       switchWorkspace(normalized);
     },
-    [switchWorkspace]
+    [switchWorkspace],
   );
 
   // Provision a brand-new pod reusing this WebID (B4 / PRD-DID §5.7 hybrid), then
@@ -579,7 +568,15 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
   // simply records didLinked:false. A master wallet is optional: with none, the
   // workspace still provisions (name-only), just without DID-link or sealed creds.
   const createWorkspace = useCallback(
-    async ({ name, server, email: byoEmail }: { name: string; server?: string; email?: string }) => {
+    async ({
+      name,
+      server,
+      email: byoEmail,
+    }: {
+      name: string;
+      server?: string;
+      email?: string;
+    }) => {
       const home = homePod.current;
       if (!home || !webId) {
         throw new Error("You need to be signed in to create a workspace.");
@@ -599,7 +596,10 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
         avoidAmbiguous: true,
       });
       const slug =
-        title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "workspace";
+        title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "workspace";
       const rand =
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? crypto.randomUUID().slice(0, 8)
@@ -666,7 +666,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       await addWorkspaceRef(home, { podRoot, role: "owner", name: title });
       switchWorkspace(podRoot);
     },
-    [webId, switchWorkspace]
+    [webId, switchWorkspace],
   );
 
   const setProject = useCallback((p: Project | null) => setProjectState(p), []);

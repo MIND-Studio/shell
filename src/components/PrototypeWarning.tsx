@@ -19,8 +19,8 @@ export function PrototypeWarning({ className = "" }: { className?: string }) {
       <div className="text-sm">
         <p className="font-semibold">Prototype — don’t use real passwords.</p>
         <p className="mt-0.5 text-amber-800 dark:text-amber-200/80">
-          This Vault is an unaudited preview. Use throwaway, made-up secrets
-          only — never your real accounts.
+          This Vault is an unaudited preview. Use throwaway, made-up secrets only — never your real
+          accounts.
         </p>
       </div>
     </div>

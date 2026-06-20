@@ -23,21 +23,18 @@
  */
 
 import {
+  buildAuthenticatedFetch,
   createDpopHeader,
   generateDpopKeyPair,
-  buildAuthenticatedFetch,
   type KeyPair,
 } from "@inrupt/solid-client-authn-core";
 import { ensureSeeded } from "@mind-studio/core/apps";
 import { getPlatform } from "@/lib/platform";
-import {
-  setActivePassportSession,
-  clearActivePassportSession,
-} from "@/lib/solid/passport-session";
-import { loginWithDid } from "@/lib/solid/did-account";
 import { podRootFromWebId } from "@/lib/solid/account-login";
-import { sign as walletSign, getDid } from "./wallet";
+import { loginWithDid } from "@/lib/solid/did-account";
+import { clearActivePassportSession, setActivePassportSession } from "@/lib/solid/passport-session";
 import type { Passport } from "./types";
+import { getDid, sign as walletSign } from "./wallet";
 
 function ensureSlash(u: string): string {
   return u.endsWith("/") ? u : u + "/";
@@ -63,11 +60,7 @@ interface MintedToken {
 }
 
 /** Run the client_credentials grant once and return a fresh DPoP-bound token. */
-async function mintToken(
-  tokenUrl: string,
-  id: string,
-  secret: string
-): Promise<MintedToken> {
+async function mintToken(tokenUrl: string, id: string, secret: string): Promise<MintedToken> {
   const dpopKey = await generateDpopKeyPair();
   const basic = btoa(`${encodeURIComponent(id)}:${encodeURIComponent(secret)}`);
   const res = await fetch(tokenUrl, {
@@ -97,7 +90,7 @@ async function mintToken(
 async function makePassportFetch(
   server: string,
   id: string,
-  secret: string
+  secret: string,
 ): Promise<typeof fetch> {
   const tokenUrl = await tokenEndpoint(server);
   let current = await mintToken(tokenUrl, id, secret);
@@ -142,9 +135,7 @@ export async function loginWithClientCredentials(opts: {
 }): Promise<void> {
   const platform = await getPlatform();
   if (platform.kind !== "web") {
-    throw new Error(
-      "Headless passport sign-in is available on the web build for now."
-    );
+    throw new Error("Headless passport sign-in is available on the web build for now.");
   }
   const fetchFn = await makePassportFetch(opts.server, opts.id, opts.secret);
   setActivePassportSession({
@@ -169,7 +160,7 @@ async function makeDidSessionFetch(
   server: string,
   did: string,
   sign: (payload: string) => Promise<string>,
-  initialToken: string
+  initialToken: string,
 ): Promise<typeof fetch> {
   let token = initialToken;
 

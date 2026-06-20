@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type AppEntry, DEFAULT_APPS, readApps } from "@mind-studio/core/apps";
+import { MindAppLauncher } from "@mind-studio/core/launcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@mind-studio/ui";
-import { MindAppLauncher } from "@mind-studio/core/launcher";
-import { readApps, DEFAULT_APPS, type AppEntry } from "@mind-studio/core/apps";
+import { useEffect, useState } from "react";
 import { useShell } from "@/lib/shell/context";
 import { resourceExistsByListing } from "@/lib/solid/pod-fs";
 
@@ -34,8 +34,7 @@ import { resourceExistsByListing } from "@/lib/solid/pod-fs";
  * container first), no write, no skeleton-lock.
  */
 export function AppSwitcher() {
-  const { apps, activeAppKey, setActiveApp, workspacePod, fetch: podFetch } =
-    useShell();
+  const { apps, activeAppKey, setActiveApp, workspacePod, fetch: podFetch } = useShell();
 
   // The waffle's tiles. Seeded with the shipped suite so it renders instantly
   // (no skeleton flash), then upgraded to the pod's own list if one exists.
@@ -78,17 +77,12 @@ export function AppSwitcher() {
         <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuLabel>Apps in this workspace</DropdownMenuLabel>
           {hosted.map((app) => (
-            <DropdownMenuItem
-              key={app.key}
-              onClick={() => setActiveApp(app.key)}
-            >
+            <DropdownMenuItem key={app.key} onClick={() => setActiveApp(app.key)}>
               <span aria-hidden className="mr-1">
                 {app.icon}
               </span>
               <span className="truncate">{app.label}</span>
-              {app.key === activeAppKey && (
-                <span className="ml-auto text-xs text-primary">●</span>
-              )}
+              {app.key === activeAppKey && <span className="ml-auto text-xs text-primary">●</span>}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />

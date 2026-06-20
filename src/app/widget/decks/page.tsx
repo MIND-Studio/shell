@@ -54,13 +54,13 @@ export default function DecksWidget() {
         } catch {
           return null; // a container without a readable meta.json isn't a deck
         }
-      })
+      }),
     );
     setDecks(
       loaded
         .filter((d): d is Deck => d !== null)
         .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
-        .slice(0, 6)
+        .slice(0, 6),
     );
   }, []);
 
