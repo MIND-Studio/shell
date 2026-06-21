@@ -17,6 +17,14 @@
  */
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Button,
   Dialog,
   DialogContent,
@@ -324,6 +332,7 @@ function UnlockedVault({
   const [draft, setDraft] = useState<EditorDraft | null>(null);
   const [showGen, setShowGen] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const selected = vault.index.find((m) => m.id === selectedId) ?? null;
 
@@ -380,13 +389,18 @@ function UnlockedVault({
     setSelectedId(saved.id);
   };
 
-  const onDeleteItem = async () => {
+  const onDeleteItem = () => {
     if (!selected) return;
-    if (!confirm(`Delete “${selected.title}”? This cannot be undone.`)) return;
+    setConfirmDeleteOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selected) return;
     await deleteItem(zone, vault, selected.id);
     onVaultChange(vault);
     setSelectedId(null);
     setSecret(null);
+    setConfirmDeleteOpen(false);
   };
 
   return (
@@ -506,6 +520,23 @@ function UnlockedVault({
           }}
         />
       )}
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selected
+                ? `Delete “${selected.title}”? This cannot be undone.`
+                : "This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
