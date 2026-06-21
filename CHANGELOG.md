@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/MIND-Studio/shell/compare/v0.3.0...v0.4.0) (2026-06-21)
+
+
+### Features
+
+* **shell:** create new project from the project switcher ([#16](https://github.com/MIND-Studio/shell/issues/16)) ([a320f8a](https://github.com/MIND-Studio/shell/commit/a320f8aa06b6ac584e20ce08c0117ddbb285eec5))
+
+
+### Bug Fixes
+
+* **color:** adopt ui 0.5.0 semantic tokens, fold accents to Mind Green ([18f3fa8](https://github.com/MIND-Studio/shell/commit/18f3fa81231bdc111a1ab1cc36ad7a36e507aeea))
+* **color:** adopt ui 0.5.0 semantic tokens, fold accents to Mind Green ([50fd28e](https://github.com/MIND-Studio/shell/commit/50fd28e8e3ead2446495035f2383f1f3618a97f9))
+
 ## [0.3.0](https://github.com/MIND-Studio/shell/compare/v0.2.2...v0.3.0) (2026-06-20)
 
 
