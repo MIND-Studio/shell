@@ -10,6 +10,15 @@ out/
 .test-fixtures/
 *.log
 *.png
+# Canonical brand icons are generated from @mind-studio/ui/brand (npm run gen:icons)
+# and committed so the favicon/PWA/apple-touch assets ship with the app.
+!src/app/apple-icon.png
+!public/icon-192.png
+!public/icon-512.png
+# Tauri desktop icons — regenerated from the same canonical mark
+# (npm run gen:tauri-icons) and committed so the bundled app matches the brand.
+!src-tauri/icons/*.png
+!src-tauri/icons/**/*.png
 .env
 .env*.local
 .DS_Store

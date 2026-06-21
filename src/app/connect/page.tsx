@@ -1,3 +1,4 @@
+import { Logo } from "@mind-studio/ui";
 import ConnectForm from "@/components/ConnectForm";
 import { PrototypeWarning } from "@/components/PrototypeWarning";
 
@@ -13,8 +14,11 @@ const IS_LOCAL_ISSUER = ISSUER.includes("localhost") || ISSUER.includes("127.0.0
 export default function ConnectPage() {
   return (
     <section className="mx-auto max-w-2xl px-6 py-16 sm:px-10 overflow-y-auto max-h-screen">
-      <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-        Mind Shell — the everything app
+      {/* The shell is the unified Mind host — its lockup is the shared weave mark
+          + the "Mind" wordmark (no per-app label), from the design system. */}
+      <Logo />
+      <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+        The everything app
       </p>
       <h1 className="mt-4 text-4xl font-semibold tracking-tight">
         Sign in once. Everything lives in your pod.
