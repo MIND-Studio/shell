@@ -1,6 +1,14 @@
 "use client";
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Button,
   Dialog,
   DialogContent,
@@ -57,6 +65,7 @@ export function ItemEditor({
   const [showGen, setShowGen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
   useEffect(() => {
     if (!draft) return;
@@ -92,9 +101,19 @@ export function ItemEditor({
     expiry !== (draft.secret.expiry ?? "") ||
     cvv !== (draft.secret.cvv ?? "");
 
-  const requestClose = () => {
-    if (isDirty && !confirm("Discard your unsaved changes?")) return;
+  // The original close action that ran after the (now-removed) confirm guard.
+  // Both the not-dirty path and the Discard button call this.
+  const proceedClose = () => {
+    setConfirmDiscardOpen(false);
     onClose();
+  };
+
+  const requestClose = () => {
+    if (isDirty) {
+      setConfirmDiscardOpen(true);
+      return;
+    }
+    proceedClose();
   };
 
   // TOTP secrets are base32 (RFC 4648: A–Z, 2–7, optional `=` padding). Flag a
@@ -316,6 +335,21 @@ export function ItemEditor({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={confirmDiscardOpen} onOpenChange={setConfirmDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. If you close now, your edits will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={proceedClose}>Discard</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
