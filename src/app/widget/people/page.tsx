@@ -17,7 +17,7 @@ import type { BridgeTheme } from "@/lib/shell/bridge-protocol";
 type Phase = "connecting" | "ready" | "error";
 type Person = { name: string; fn: string };
 
-const ACCENT = "#ec4899"; // contacts pink (mirrors the tile header accent)
+const ACCENT = "#16b88a"; // Mind Green brand accent (mirrors the tile header)
 
 /** Pull `vcard:fn`, tolerating both the prefix and full-IRI forms. */
 function vcardFn(ttl: string): string | undefined {

@@ -15,7 +15,7 @@
  * Never logged: amounts, memos, transfer bodies (rule #5).
  *
  * Design language: "the ledger as a signed artifact" — tabular numerals, an
- * amber unit accent, transactions as a hash-chain timeline, and a Send review
+ * green unit accent, transactions as a hash-chain timeline, and a Send review
  * framed as the canonical document about to be signed.
  */
 
@@ -42,7 +42,9 @@ import {
 
 // ---- presentation helpers ----------------------------------------------------
 
-const AMBER = "#f59e0b";
+// Wallet's balance accent — Mind Green (the single brand accent) via the token,
+// not a raw gold hex. Positive/negative gain colors below stay semantic.
+const ACCENT = "var(--primary)";
 
 const KIND_META: Record<
   string,
@@ -244,13 +246,13 @@ function WalletView({
   return (
     <div className="relative h-full overflow-y-auto">
       <WalletStyles />
-      {/* atmosphere: a faint amber bloom behind the balance, vignetting to the surface */}
+      {/* atmosphere: a faint green bloom behind the balance, vignetting to the surface */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-72"
         style={{
           background:
-            "radial-gradient(60% 100% at 35% 0%, rgba(245,158,11,0.10), rgba(245,158,11,0.03) 45%, transparent 75%)",
+            "radial-gradient(60% 100% at 35% 0%, rgba(22,184,138,0.10), rgba(22,184,138,0.03) 45%, transparent 75%)",
         }}
       />
       <div className="relative mx-auto max-w-3xl space-y-8 p-6 pb-16">
@@ -292,11 +294,11 @@ function BalanceHeader({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-            <span style={{ color: AMBER }}>●</span> Balance
+            <span style={{ color: ACCENT }}>●</span> Balance
           </p>
           <p className="mt-1 text-6xl font-semibold tracking-tight tabular-nums">
             {fmt.format(shown)}
-            <span className="ml-3 align-baseline text-xl font-medium" style={{ color: AMBER }}>
+            <span className="ml-3 align-baseline text-xl font-medium" style={{ color: ACCENT }}>
               {view.unit}
             </span>
           </p>
@@ -308,7 +310,7 @@ function BalanceHeader({
 
       {(earned > 0 || spent > 0) && (
         <div className="flex gap-2 font-mono text-[11px] text-muted-foreground">
-          <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-emerald-400 tabular-nums">
+          <span className="rounded-full border border-success/20 bg-success/10 px-2.5 py-0.5 text-success tabular-nums">
             ↓ {fmt.format(earned)} in
           </span>
           <span className="rounded-full border border-border bg-muted/40 px-2.5 py-0.5 tabular-nums">
@@ -380,9 +382,9 @@ function TxRow({ entry, unit, index }: { entry: LedgerEntry; unit: string; index
   const meta = kindMeta(entry.kind, entry.amount);
   const node =
     meta.tone === "credit"
-      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
+      ? "border-success/40 bg-success/15 text-success"
       : meta.tone === "meter"
-        ? "border-amber-500/40 bg-amber-500/15 text-amber-400"
+        ? "border-warning/40 bg-warning/15 text-warning"
         : "border-border bg-muted text-muted-foreground";
   return (
     <li
@@ -411,9 +413,7 @@ function TxRow({ entry, unit, index }: { entry: LedgerEntry; unit: string; index
         </p>
       </div>
       <div className="shrink-0 text-right">
-        <p
-          className={`text-sm font-medium tabular-nums ${meta.positive ? "text-emerald-400" : ""}`}
-        >
+        <p className={`text-sm font-medium tabular-nums ${meta.positive ? "text-success" : ""}`}>
           {entry.amount > 0 ? "+" : ""}
           {fmt.format(entry.amount)}{" "}
           <span className="text-xs font-normal text-muted-foreground">{unit}</span>
@@ -591,7 +591,7 @@ function SendPanel({
         <h2 className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           Send {view.unit}
         </h2>
-        <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-amber-400">
+        <span className="rounded-full border border-warning/25 bg-warning/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-warning">
           feeless
         </span>
       </div>
@@ -599,7 +599,7 @@ function SendPanel({
       {phase.p === "review" ? (
         <div className="space-y-4">
           {/* the document about to be signed */}
-          <div className="rounded-lg border border-dashed border-amber-500/30 bg-background/60 p-4">
+          <div className="rounded-lg border border-dashed border-warning/30 bg-background/60 p-4">
             <dl className="space-y-1.5 text-sm">
               {phase.toName && <Row k="To" v={phase.toName} />}
               <Row k={phase.toName ? "WebID" : "To"} v={phase.to} mono />
@@ -666,7 +666,7 @@ function SendPanel({
           </div>
 
           {phase.p === "sent" && (
-            <p className="text-sm text-emerald-400">
+            <p className="text-sm text-success">
               Sent ✓ — recorded at <span className="font-mono">#{phase.seq}</span>.
             </p>
           )}

@@ -261,12 +261,12 @@ function AccountRow({ account }: { account: ProviderAccount }) {
       <div className="flex items-center gap-2">
         <span className="truncate text-sm font-medium">{account.label}</span>
         {account.didLinked && (
-          <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-emerald-500">
+          <span className="rounded bg-success/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-success">
             DID
           </span>
         )}
         {account.pending && (
-          <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-500">
+          <span className="rounded bg-warning/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-warning">
             Pending
           </span>
         )}
@@ -288,7 +288,7 @@ function AccountRow({ account }: { account: ProviderAccount }) {
       <p className="mt-0.5 text-xs text-muted-foreground">{entry.reason}</p>
 
       {account.pending && (
-        <div className="mt-2 flex items-center gap-2 rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-600 dark:text-amber-400">
+        <div className="mt-2 flex items-center gap-2 rounded-md bg-warning/10 px-2 py-1.5 text-xs text-warning">
           <span className="min-w-0 flex-1">
             Confirm this email at the provider, then mark it verified to re-enable automatic
             sign-in.

@@ -26,7 +26,7 @@ type Snapshot = {
   syncedAt: string;
 };
 
-const ACCENT = "#f59e0b"; // wallet amber (mirrors the 💰 tile header)
+const ACCENT = "#16b88a"; // Mind Green brand accent (mirrors the tile header)
 const GREEN = "#10b981";
 
 const KIND_GLYPH: Record<string, string> = {

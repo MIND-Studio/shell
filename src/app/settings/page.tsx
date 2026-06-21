@@ -166,7 +166,7 @@ export default function SettingsPage() {
                         </Button>
                       </span>
                     )}
-                    {nameError && <p className="mt-1 text-xs text-red-400">{nameError}</p>}
+                    {nameError && <p className="mt-1 text-xs text-destructive">{nameError}</p>}
                   </dd>
                 </div>
                 <div>
