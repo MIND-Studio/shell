@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/MIND-Studio/shell/compare/v0.4.0...v0.5.0) (2026-06-21)
+
+
+### Features
+
+* adopt brand logo, canonical web + desktop icons (ui[#29](https://github.com/MIND-Studio/shell/issues/29) wave 2) ([#21](https://github.com/MIND-Studio/shell/issues/21)) ([2997bcc](https://github.com/MIND-Studio/shell/commit/2997bcc697d2b9eec9c2c6fcc92ca3427441374c))
+
 ## [0.4.0](https://github.com/MIND-Studio/shell/compare/v0.3.0...v0.4.0) (2026-06-21)
 
 
