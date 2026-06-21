@@ -149,7 +149,7 @@ export default function QuickNoteWidget() {
   const border = dark ? "#27272a" : "#e5e7eb";
   const fieldBg = dark ? "#18181b" : "#f9fafb";
   const hoverBg = dark ? "#1f1f23" : "#f3f4f6";
-  const accent = "#6366f1";
+  const accent = "#16b88a";
 
   return (
     <div

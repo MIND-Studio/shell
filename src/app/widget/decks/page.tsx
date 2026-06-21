@@ -19,7 +19,7 @@ import type { BridgeTheme } from "@/lib/shell/bridge-protocol";
 type Phase = "connecting" | "ready" | "error";
 type Deck = { id: string; title: string; updatedAt: string };
 
-const ACCENT = "#14b8a6"; // slides teal (mirrors the tile header accent)
+const ACCENT = "#16b88a"; // Mind Green brand accent (mirrors the tile header)
 
 export default function DecksWidget() {
   const [phase, setPhase] = useState<Phase>("connecting");

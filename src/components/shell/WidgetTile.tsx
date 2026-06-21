@@ -39,22 +39,12 @@ function maxHeight(size: WidgetSize): number {
 const MIN_HEIGHT = 96;
 
 /**
- * Per-app accent (the "refined" Home look): a soft, app-identifying tint on each
- * tile's header. Keyed by the OWNING app's key; falls back to the Mind indigo.
- * Pure chrome — it never reaches the sandboxed widget body.
+ * Tile header accent — a soft tint on each widget tile's header. Mind Green is
+ * the single brand accent across the fleet, so every tile uses `--primary`
+ * (was a per-app raw-hex palette map). Pure chrome — it never reaches the
+ * sandboxed widget body. Alpha tints come from `color-mix`, not hex suffixes.
  */
-const APP_ACCENTS: Record<string, string> = {
-  drive: "#3b82f6",
-  notes: "#6366f1",
-  contacts: "#ec4899",
-  calendar: "#f97316",
-  photos: "#8b5cf6",
-  vault: "#f59e0b",
-  slides: "#14b8a6",
-};
-function accentFor(key: string): string {
-  return APP_ACCENTS[key] ?? "#6366f1";
-}
+const ACCENT = "var(--primary)";
 
 export function WidgetTile({
   app,
@@ -111,7 +101,7 @@ export function WidgetTile({
 
   const cap = maxHeight(widget.maxSize ?? size);
   const bodyHeight = Math.max(MIN_HEIGHT, Math.min(height ?? defaultHeight(size), cap));
-  const accent = accentFor(app.key);
+  const accent = ACCENT;
 
   return (
     <section
@@ -120,12 +110,14 @@ export function WidgetTile({
     >
       <header
         className="flex items-center gap-2 border-b border-[color:var(--border)] px-3 py-2"
-        style={{ background: `linear-gradient(90deg, ${accent}1f, transparent 72%)` }}
+        style={{
+          background: `linear-gradient(90deg, color-mix(in oklch, ${accent} 12%, transparent), transparent 72%)`,
+        }}
       >
         <span
           aria-hidden
           className="grid size-6 shrink-0 place-items-center rounded-md text-sm leading-none"
-          style={{ background: `${accent}26`, color: accent }}
+          style={{ background: `color-mix(in oklch, ${accent} 15%, transparent)`, color: accent }}
         >
           {widget.icon}
         </span>

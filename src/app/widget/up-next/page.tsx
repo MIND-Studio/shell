@@ -17,7 +17,7 @@ import type { BridgeTheme } from "@/lib/shell/bridge-protocol";
 type Phase = "connecting" | "ready" | "error";
 type Event = { name: string; title: string; start: Date | null };
 
-const ACCENT = "#f97316"; // calendar orange (mirrors the tile header accent)
+const ACCENT = "#16b88a"; // Mind Green brand accent (mirrors the tile header)
 
 /** Pull a schema.org literal, tolerating both `schema:pred` and full-IRI forms. */
 function schemaLit(ttl: string, pred: string): string | undefined {

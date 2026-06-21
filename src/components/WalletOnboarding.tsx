@@ -300,7 +300,7 @@ export default function WalletOnboarding() {
         )}
 
         {status === "locked" && (
-          <p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-[11px] leading-snug text-amber-700 dark:text-amber-200">
+          <p className="rounded-md border border-warning/50 bg-warning/10 p-2 text-[11px] leading-snug text-warning">
             This device already holds an identity wallet (one per device for now). Your master
             password must match it — this form finishes its setup or resumes it, rather than
             starting over.

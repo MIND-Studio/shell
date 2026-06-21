@@ -419,7 +419,7 @@ function SessionBindingCard({
           {busy === "verify" ? "Verifying…" : "Verify control"}
         </Button>
         {verdict === "ok" && (
-          <span data-testid="verdict-ok" className="text-sm font-medium text-emerald-500">
+          <span data-testid="verdict-ok" className="text-sm font-medium text-success">
             ✓ verified
           </span>
         )}
@@ -611,7 +611,7 @@ function PassportRow({
               </span>
             )}
             {passport.bound && (
-              <span className="ml-2 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-500">
+              <span className="ml-2 rounded bg-success/15 px-1.5 py-0.5 text-[10px] font-medium text-success">
                 bound
               </span>
             )}
@@ -629,7 +629,7 @@ function PassportRow({
           </p>
           <p className="break-all font-mono text-[11px] text-muted-foreground">{podRoot}</p>
         </div>
-        {verdict === "ok" && <span className="text-sm text-emerald-500">✓</span>}
+        {verdict === "ok" && <span className="text-sm text-success">✓</span>}
         {verdict === "fail" && <span className="text-sm text-destructive">✗</span>}
       </div>
       {isActive ? (
@@ -699,7 +699,7 @@ function PassportRow({
                 {busy === "did" ? "Signing challenge…" : "Log in with DID"}
               </Button>
               {didVerdict === "ok" && (
-                <span className="text-sm font-medium text-emerald-500">✓ signed in</span>
+                <span className="text-sm font-medium text-success">✓ signed in</span>
               )}
               {didVerdict === "fail" && (
                 <span className="text-sm font-medium text-destructive">✗ failed</span>
@@ -709,7 +709,7 @@ function PassportRow({
               <p
                 className={`mt-2 text-[11px] ${
                   didVerdict === "ok"
-                    ? "text-emerald-500"
+                    ? "text-success"
                     : didVerdict === "fail"
                       ? "text-destructive"
                       : "text-muted-foreground"
@@ -831,12 +831,12 @@ function AddPassportDialog({ did, onClose }: { did: string; onClose: () => void 
                 <p className="mt-1 text-[11px] text-muted-foreground">Checking DID support…</p>
               )}
               {serverDid === "yes" && (
-                <p className="mt-1 text-[11px] text-emerald-500">
+                <p className="mt-1 text-[11px] text-success">
                   ✓ Supports DID login — your master DID will be linked automatically.
                 </p>
               )}
               {serverDid === "no" && (
-                <p className="mt-1 text-[11px] text-amber-500">
+                <p className="mt-1 text-[11px] text-warning">
                   Stock CSS — no DID login here. The passport still works via its stored key
                   (password-less switch).
                 </p>

@@ -305,7 +305,7 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
           aria-describedby={error ? "ws-create-error" : undefined}
         />
         {canCreate === false ? (
-          <p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs leading-snug text-amber-700 dark:text-amber-200">
+          <p className="rounded-md border border-warning/50 bg-warning/10 p-2 text-xs leading-snug text-warning">
             This server can&rsquo;t create extra pods — it makes one pod per identity, at sign-in.
             Use &ldquo;Join existing&rdquo; to add a pod you already have access to, or choose a
             different server below.
@@ -414,7 +414,7 @@ function CreateWorkspaceForm({ onDone }: { onDone: () => void }) {
           {crossIssuer && canCreate !== false && (
             <p
               data-testid="ws-cross-issuer-warning"
-              className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs leading-snug text-amber-700 dark:text-amber-200"
+              className="rounded-md border border-warning/50 bg-warning/10 p-2 text-xs leading-snug text-warning"
             >
               Heads-up: your sign-in lives on a different server, so this workspace will look empty
               here — its pod only answers a session from its own server. Its login is saved to your

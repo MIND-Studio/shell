@@ -157,7 +157,7 @@ export function ItemDetail({
               {breach.status === "checking" ? "Checking…" : "Check breaches"}
             </Button>
             {breach.status === "safe" && (
-              <span className="ml-2 text-sm text-emerald-500">Not found in known breaches.</span>
+              <span className="ml-2 text-sm text-success">Not found in known breaches.</span>
             )}
             {breach.status === "pwned" && (
               <span className="ml-2 text-sm text-destructive">
